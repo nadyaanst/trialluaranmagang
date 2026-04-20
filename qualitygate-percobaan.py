@@ -13,140 +13,123 @@ st.set_page_config(
 )
 
 # =====================================================
-# PROFESSIONAL DARK CSS
+# PROFESSIONAL DARK CSS (Refined)
 # =====================================================
 st.markdown("""
 <style>
-.stApp{
-    background-color:#0d1117;
-    color:#e6edf3;
-    font-family:Arial, Helvetica, sans-serif;
+.stApp {
+    background-color: #0d1117;
+    color: #e6edf3;
 }
-section[data-testid="stSidebar"]{
-    background-color:#161b22;
+section[data-testid="stSidebar"] {
+    background-color: #161b22;
+    border-right: 1px solid #30363d;
 }
-h1,h2,h3,h4,h5,h6{
-    color:#f0f6fc !important;
-    font-weight:700;
+h1, h2, h3 {
+    color: #f0f6fc !important;
+    font-weight: 700;
 }
-label,p,span{
-    color:#c9d1d9 !important;
+label, p, span {
+    color: #c9d1d9 !important;
 }
-input, textarea{
-    background-color:#21262d !important;
-    color:white !important;
-    border:1px solid #30363d !important;
-    border-radius:8px !important;
+/* Input Fields */
+.stTextInput input, .stSelectbox div, .stDateInput input, .stNumberInput input {
+    background-color: #21262d !important;
+    color: white !important;
+    border: 1px solid #30363d !important;
+    border-radius: 6px !important;
 }
-div[data-baseweb="select"] > div{
-    background-color:#21262d !important;
-    color:white !important;
-    border:1px solid #30363d !important;
-    border-radius:8px !important;
+/* Buttons */
+.stButton button {
+    width: 100%;
+    background-color: #238636;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem;
 }
-.stButton button{
-    background:#238636;
-    color:white;
-    border:none;
-    border-radius:8px;
-    font-weight:600;
+.stButton button:hover {
+    background-color: #2ea043;
+    color: white;
 }
-.stButton button:hover{
-    background:#2ea043;
+/* Metrics */
+[data-testid="metric-container"] {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    padding: 15px;
+    border-radius: 8px;
 }
-.stDownloadButton button{
-    background:#1f6feb;
-    color:white;
-    border:none;
-    border-radius:8px;
-    font-weight:600;
+[data-testid="stMetricValue"] {
+    color: #58a6ff !important;
 }
-[data-testid="metric-container"]{
-    background:#161b22;
-    border:1px solid #30363d;
-    padding:18px;
-    border-radius:12px;
-}
-[data-testid="stDataFrame"]{
-    border:1px solid #30363d;
-    border-radius:12px;
-    overflow:hidden;
-}
-div[data-testid="stAlert"]{
-    background:#0f5132 !important;
-    color:white !important;
-    border-radius:10px;
+/* Table / DataFrame */
+[data-testid="stDataFrame"] {
+    border: 1px solid #30363d;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # =====================================================
-# TITLE
+# INITIALIZATION
 # =====================================================
-st.title("Quality Gate Preforming Monitoring System")
+COLUMNS = ["No", "Tanggal", "Shift", "No HP", "Layer HP", "Kode Mold", "No Lot", "Keterangan"]
 
-# =====================================================
-# COLUMN TEMPLATE
-# =====================================================
-COLUMNS = [
-    "No","Tanggal","Shift","No HP","Layer HP",
-    "Kode Mold","No Lot","Keterangan"
-]
-
-# =====================================================
-# SESSION STATE
-# =====================================================
 if "db" not in st.session_state:
     st.session_state["db"] = pd.DataFrame(columns=COLUMNS)
 
+st.title("Quality Gate Preform Monitoring System")
+
 # =====================================================
-# SIDEBAR
+# SIDEBAR: DATA MANAGEMENT
 # =====================================================
 st.sidebar.header("Data Management")
 
-uploaded_file = st.sidebar.file_uploader("Upload Excel", type=["xlsx"])
-
+# Upload File
+uploaded_file = st.sidebar.file_uploader("Upload Excel Rekap", type=["xlsx"])
 if uploaded_file:
     try:
         df_upload = pd.read_excel(uploaded_file)
+        # Cleaning column names
         df_upload.columns = [str(c).strip() for c in df_upload.columns]
-        df_upload = df_upload.loc[:, ~df_upload.columns.duplicated()]
-
+        
+        # Ensure all required columns exist
         for col in COLUMNS:
             if col not in df_upload.columns:
                 df_upload[col] = ""
-
+        
+        # Format Tanggal agar seragam (datetime.date)
+        df_upload["Tanggal"] = pd.to_datetime(df_upload["Tanggal"], errors='coerce').dt.date
+        
+        # Reorder and reset No
         df_upload = df_upload[COLUMNS]
-        df_upload["No"] = range(1, len(df_upload)+1)
-
+        df_upload["No"] = range(1, len(df_upload) + 1)
+        
         st.session_state["db"] = df_upload
-        st.sidebar.success("Upload berhasil")
-
+        st.sidebar.success("Sinkronisasi file berhasil")
     except Exception as e:
-        st.sidebar.error(f"Error : {e}")
+        st.sidebar.error(f"Error Upload: {e}")
 
-# =====================================================
-# INPUT DATA
-# =====================================================
-st.sidebar.header("Input Data")
-
-with st.sidebar.form("form", clear_on_submit=True):
-
+# Input Data Form
+st.sidebar.markdown("---")
+st.sidebar.header("Input Data Baru")
+with st.sidebar.form("form_input", clear_on_submit=True):
     tgl = st.date_input("Tanggal", datetime.today())
-    shift = st.selectbox("Shift", [1,2,3])
-    hp = st.selectbox("No HP", [f"HP{i:02d}" for i in range(1,31)])
-    layer = st.selectbox("Layer HP", [1,2,3,4,5])
+    shift = st.selectbox("Shift", [1, 2, 3])
+    hp = st.selectbox("No HP", [f"HP{i:02d}" for i in range(1, 31)])
+    layer = st.selectbox("Layer HP", [1, 2, 3, 4, 5])
     mold = st.text_input("Kode Mold")
     lot = st.text_input("No Lot")
-    ket = st.selectbox("Keterangan", ["OK","Visual","Dimensi","Visual Dimensi"])
-
-    submit = st.form_submit_button("Tambah Data")
-
+    ket = st.selectbox("Keterangan", ["OK", "Visual", "Dimensi", "Visual Dimensi"])
+    
+    submit = st.form_submit_button("Simpan Baris Baru")
+    
     if submit:
-        df = st.session_state["db"].copy()
-
-        new = pd.DataFrame([{
-            "Tanggal": tgl.strftime("%Y-%m-%d"),
+        # Get current DB
+        current_db = st.session_state["db"].copy()
+        
+        # Create new row
+        new_row = pd.DataFrame([{
+            "Tanggal": tgl, # datetime.date object
             "Shift": shift,
             "No HP": hp,
             "Layer HP": layer,
@@ -154,200 +137,144 @@ with st.sidebar.form("form", clear_on_submit=True):
             "No Lot": lot,
             "Keterangan": ket
         }])
-
-        df = pd.concat(
-            [df.drop(columns=["No"], errors="ignore"), new],
-            ignore_index=True
-        )
-
-        df["No"] = range(1, len(df)+1)
-
-        st.session_state["db"] = df
-        st.success("Data berhasil ditambahkan")
+        
+        # Combine
+        combined = pd.concat([current_db.drop(columns=["No"], errors="ignore"), new_row], ignore_index=True)
+        combined["No"] = range(1, len(combined) + 1)
+        
+        st.session_state["db"] = combined
+        st.rerun()
 
 # =====================================================
-# LOAD DATA
+# DATA PROCESSING
 # =====================================================
-df = st.session_state["db"].copy()
+df_raw = st.session_state["db"].copy()
 
-if df.empty:
-    st.warning("Belum ada data")
+if df_raw.empty:
+    st.info("Silakan unggah file Excel atau input data melalui sidebar untuk memulai.")
     st.stop()
 
-df["Tanggal"] = pd.to_datetime(df["Tanggal"], errors="coerce")
-df["is_ng"] = df["Keterangan"].astype(str).str.upper().ne("OK").astype(int)
+# Tambahkan kolom pembantu untuk analisis
+df_raw["is_ng"] = df_raw["Keterangan"].astype(str).str.upper().ne("OK").astype(int)
+# Pastikan kolom tanggal adalah objek date untuk filter
+df_raw["Tanggal_DT"] = pd.to_datetime(df_raw["Tanggal"]).dt.date
 
 # =====================================================
-# FILTER
+# DASHBOARD FILTERS
 # =====================================================
-st.subheader("Filter Data")
-
-c1,c2,c3,c4 = st.columns(4)
+st.subheader("Filter Dashboard")
+c1, c2, c3, c4 = st.columns(4)
 
 with c1:
-    f_shift = st.multiselect("Shift", sorted(df["Shift"].dropna().unique()))
-
+    f_shift = st.multiselect("Shift", sorted(df_raw["Shift"].unique()))
 with c2:
-    f_hp = st.multiselect("No HP", sorted(df["No HP"].dropna().unique()))
-
+    f_hp = st.multiselect("No HP", sorted(df_raw["No HP"].unique()))
 with c3:
-    f_ket = st.multiselect(
-        "Keterangan",
-        ["OK","Visual","Dimensi","Visual Dimensi"]
-    )
-
+    f_ket = st.multiselect("Keterangan", ["OK", "Visual", "Dimensi", "Visual Dimensi"])
 with c4:
-    f_date = st.date_input("Tanggal Range", [])
+    f_date = st.date_input("Rentang Tanggal", [])
 
-df_f = df.copy()
-
+# Apply Filters
+df_f = df_raw.copy()
 if f_shift:
     df_f = df_f[df_f["Shift"].isin(f_shift)]
-
 if f_hp:
     df_f = df_f[df_f["No HP"].isin(f_hp)]
-
 if f_ket:
     df_f = df_f[df_f["Keterangan"].isin(f_ket)]
-
 if len(f_date) == 2:
-    df_f = df_f[
-        (df_f["Tanggal"] >= pd.to_datetime(f_date[0])) &
-        (df_f["Tanggal"] <= pd.to_datetime(f_date[1]))
-    ]
+    df_f = df_f[(df_f["Tanggal_DT"] >= f_date[0]) & (df_f["Tanggal_DT"] <= f_date[1])]
 
 # =====================================================
-# KPI
+# KPI SECTION
 # =====================================================
 total = len(df_f)
 ng = int(df_f["is_ng"].sum())
 ok = total - ng
+ng_rate = (ng / total) if total > 0 else 0
 
-defect = ng/total if total > 0 else 0
-ok_rate = ok/total if total > 0 else 0
-
-k1,k2,k3,k4 = st.columns(4)
-
-k1.metric("Total Check", total)
-k2.metric("Total NG", ng)
-k3.metric("Persentase NG", f"{defect:.2%}")
-k4.metric("Persentase OK", f"{ok_rate:.2%}")
+k1, k2, k3 = st.columns(3)
+k1.metric("Total Check", f"{total} Unit")
+k2.metric("Total NG", f"{ng} Unit")
+k3.metric("Proporsi NG (%)", f"{ng_rate:.2%}")
 
 # =====================================================
-# TOP 5 MACHINE
+# TOP 5 MACHINES TABLE
 # =====================================================
-st.subheader("5 Mesin Hotpress Paling Bermasalah")
+st.markdown("---")
+st.subheader("Top 5 Mesin Hotpress dengan NG Tertinggi")
 
 top5 = (
     df_f.groupby("No HP")["is_ng"]
     .sum()
     .reset_index()
-    .rename(columns={
-        "No HP":"Mesin Hotpress",
-        "is_ng":"Jumlah NG"
-    })
-    .sort_values(by="Jumlah NG", ascending=False)
+    .rename(columns={"No HP": "ID Mesin", "is_ng": "Jumlah Unit NG"})
+    .sort_values(by="Jumlah Unit NG", ascending=False)
     .head(5)
 )
+top5.index = range(1, len(top5) + 1)
 
-top5.index = range(1, len(top5)+1)
-
-st.dataframe(
-    top5,
-    use_container_width=True,
-    height=250
-)
+if not top5.empty and top5["Jumlah Unit NG"].sum() > 0:
+    st.table(top5)
+else:
+    st.write("Tidak ada data NG ditemukan pada filter ini.")
 
 # =====================================================
-# CHART
+# CHARTS
 # =====================================================
-st.subheader("Analisis Data")
-
-g1,g2 = st.columns(2)
+st.markdown("---")
+g1, g2 = st.columns(2)
 
 with g1:
-    mesin = df_f.groupby("No HP")["is_ng"].sum().reset_index()
-
-    fig1 = px.bar(
-        mesin,
-        x="No HP",
-        y="is_ng",
-        title="NG per Mesin",
-        template="plotly_dark",
-        text_auto=True
-    )
-
-    fig1.update_layout(
-        paper_bgcolor="#0d1117",
-        plot_bgcolor="#0d1117"
-    )
-
+    st.subheader("Grafik NG per Mesin")
+    mesin_chart = df_f.groupby("No HP")["is_ng"].sum().reset_index()
+    fig1 = px.bar(mesin_chart, x="No HP", y="is_ng", template="plotly_dark", 
+                 labels={"is_ng": "Jumlah NG", "No HP": "ID Mesin"},
+                 color_discrete_sequence=['#58a6ff'])
+    fig1.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(fig1, use_container_width=True)
 
 with g2:
-    cacat = df_f[df_f["is_ng"] == 1]["Keterangan"].value_counts().reset_index()
-    cacat.columns = ["Jenis Cacat", "Jumlah"]
+    st.subheader("Komposisi Jenis Defect")
+    ng_only = df_f[df_f["is_ng"] == 1]
+    if not ng_only.empty:
+        cacat_pie = ng_only["Keterangan"].value_counts().reset_index()
+        cacat_pie.columns = ["Jenis", "Total"]
+        fig2 = px.pie(cacat_pie, names="Jenis", values="Total", template="plotly_dark", hole=0.4)
+        fig2.update_layout(paper_bgcolor='rgba(0,0,0,0)')
+        st.plotly_chart(fig2, use_container_width=True)
+    else:
+        st.write("Belum ada data defect untuk ditampilkan.")
 
-    fig2 = px.pie(
-        cacat,
-        names="Jenis Cacat",
-        values="Jumlah",
-        title="Distribusi Defect",
-        template="plotly_dark",
-        hole=0.45
-    )
+# =========================
+# MANAGEMENT TABLE
+# =========================
+st.markdown("---")
+st.subheader("Database Management")
+with st.expander("Klik untuk melihat/hapus database lengkap"):
+    st.dataframe(df_raw[COLUMNS], use_container_width=True)
+    
+    col_del1, col_del2 = st.columns([1, 4])
+    with col_del1:
+        id_hapus = st.number_input("Input ID (No)", min_value=1, step=1)
+        if st.button("Hapus Baris"):
+            db_mod = st.session_state["db"]
+            db_mod = db_mod[db_mod["No"] != id_hapus]
+            db_mod["No"] = range(1, len(db_mod) + 1)
+            st.session_state["db"] = db_mod
+            st.rerun()
 
-    fig2.update_layout(
-        paper_bgcolor="#0d1117"
-    )
-
-    st.plotly_chart(fig2, use_container_width=True)
-
-# =====================================================
-# TABLE
-# =====================================================
-st.subheader("Tabel Data")
-
-st.dataframe(
-    df_f[COLUMNS],
-    use_container_width=True,
-    height=450
-)
-
-# =====================================================
-# DELETE
-# =====================================================
-st.subheader("Hapus Data")
-
-hapus = st.number_input(
-    "Masukkan Nomor Data",
-    min_value=1,
-    step=1
-)
-
-if st.button("Hapus"):
-    df = st.session_state["db"]
-    df = df[df["No"] != hapus]
-    df["No"] = range(1, len(df)+1)
-
-    st.session_state["db"] = df
-    st.success("Data berhasil dihapus")
-
-# =====================================================
-# DOWNLOAD
-# =====================================================
-st.subheader("Download Data")
-
-def convert_excel(data):
-    output = io.BytesIO()
-
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        data[COLUMNS].to_excel(writer, index=False)
-
-    return output.getvalue()
+# Download
+st.markdown("---")
+def to_excel(data):
+    out = io.BytesIO()
+    with pd.ExcelWriter(out, engine='openpyxl') as w:
+        data[COLUMNS].to_excel(w, index=False)
+    return out.getvalue()
 
 st.download_button(
-    label="Download Excel",
-    data=convert_excel(df),
-    file_name="quality_gate.xlsx"
+    label="Download Seluruh Rekap Gabungan (.xlsx)",
+    data=to_excel(st.session_state["db"]),
+    file_name=f"Quality_Gate_Rekap_{datetime.now().strftime('%Y%m%d')}.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
