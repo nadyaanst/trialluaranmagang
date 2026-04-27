@@ -13,74 +13,6 @@ st.set_page_config(
 )
 
 # =====================================================
-# PROFESSIONAL DARK CSS
-# =====================================================
-st.markdown("""
-<style>
-.stApp{
-    background-color:#0d1117;
-    color:#e6edf3;
-    font-family:Arial, Helvetica, sans-serif;
-}
-section[data-testid="stSidebar"]{
-    background-color:#161b22;
-}
-h1,h2,h3,h4,h5,h6{
-    color:#f0f6fc !important;
-    font-weight:700;
-}
-label,p,span{
-    color:#c9d1d9 !important;
-}
-input, textarea{
-    background-color:#21262d !important;
-    color:white !important;
-    border:1px solid #30363d !important;
-    border-radius:8px !important;
-}
-div[data-baseweb="select"] > div{
-    background-color:#21262d !important;
-    color:white !important;
-    border:1px solid #30363d !important;
-    border-radius:8px !important;
-}
-.stButton button{
-    background:#238636;
-    color:white;
-    border:none;
-    border-radius:8px;
-    font-weight:600;
-}
-.stButton button:hover{
-    background:#2ea043;
-}
-.stDownloadButton button{
-    background:#1f6feb;
-    color:white;
-    border:none;
-    border-radius:8px;
-    font-weight:600;
-}
-[data-testid="metric-container"]{
-    background:#161b22;
-    border:1px solid #30363d;
-    padding:18px;
-    border-radius:12px;
-}
-[data-testid="stDataFrame"]{
-    border:1px solid #30363d;
-    border-radius:12px;
-    overflow:hidden;
-}
-div[data-testid="stAlert"]{
-    background:#0f5132 !important;
-    color:white !important;
-    border-radius:10px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# =====================================================
 # TITLE
 # =====================================================
 st.title("Quality Gate Preforming Monitoring System")
@@ -174,7 +106,7 @@ if df.empty:
     st.warning("Belum ada data")
     st.stop()
 
-df["Tanggal"] = pd.to_datetime(df["Tanggal"], errors="coerce")
+df["Tanggal"] = pd.to_datetime(df["Tanggal"], errors="coerce", dayfirst=True)
 df["is_ng"] = df["Keterangan"].astype(str).str.upper().ne("OK").astype(int)
 
 # =====================================================
@@ -254,7 +186,7 @@ top5.index = range(1, len(top5)+1)
 
 st.dataframe(
     top5,
-    use_container_width=True,
+    width="stretch",
     height=250
 )
 
@@ -273,16 +205,10 @@ with g1:
         x="No HP",
         y="is_ng",
         title="NG per Mesin",
-        template="plotly_dark",
         text_auto=True
     )
 
-    fig1.update_layout(
-        paper_bgcolor="#0d1117",
-        plot_bgcolor="#0d1117"
-    )
-
-    st.plotly_chart(fig1, use_container_width=True)
+    st.plotly_chart(fig1, width="stretch", theme="streamlit")
 
 with g2:
     cacat = df_f[df_f["is_ng"] == 1]["Keterangan"].value_counts().reset_index()
@@ -293,15 +219,10 @@ with g2:
         names="Jenis Cacat",
         values="Jumlah",
         title="Distribusi Defect",
-        template="plotly_dark",
         hole=0.45
     )
 
-    fig2.update_layout(
-        paper_bgcolor="#0d1117"
-    )
-
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig2, width="stretch", theme="streamlit")
 
 # =====================================================
 # TABLE
@@ -310,7 +231,7 @@ st.subheader("Tabel Data")
 
 st.dataframe(
     df_f[COLUMNS],
-    use_container_width=True,
+    width="stretch",
     height=450
 )
 
