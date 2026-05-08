@@ -4,36 +4,106 @@ import plotly.express as px
 from datetime import datetime
 import io
 
-# =====================================================
-# PAGE CONFIG
-# =====================================================
 st.set_page_config(
     page_title="Quality Gate Monitoring",
     layout="wide"
 )
 
-# =====================================================
-# TITLE
-# =====================================================
+st.markdown("""
+<style>
+
+    /* BACKGROUND */
+    .stApp {
+        background-color: #081F44;
+        color: white;
+    }
+
+    /* TITLE */
+    h1, h2, h3 {
+        color: white !important;
+        font-weight: 700;
+    }
+
+    /* SIDEBAR */
+    section[data-testid="stSidebar"] {
+        background-color: #710014;
+    }
+
+    section[data-testid="stSidebar"] * {
+        color: white !important;
+    }
+
+    /* INPUT BOX */
+    .stTextInput input,
+    .stDateInput input,
+    .stNumberInput input,
+    .stSelectbox div[data-baseweb="select"] > div {
+        background-color: #0B1733 !important;
+        color: white !important;
+        border: 1px solid #710014 !important;
+        border-radius: 10px !important;
+    }
+
+    /* MULTISELECT */
+    .stMultiSelect div[data-baseweb="select"] > div {
+        background-color: #0B1733 !important;
+        border-radius: 10px !important;
+        border: 1px solid #710014 !important;
+        color: white !important;
+    }
+
+    /* BUTTON */
+    .stButton>button,
+    .stDownloadButton>button,
+    .stFormSubmitButton>button {
+        background-color: #710014 !important;
+        color: white !important;
+        border-radius: 10px !important;
+        border: none !important;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+
+    .stButton>button:hover,
+    .stDownloadButton>button:hover,
+    .stFormSubmitButton>button:hover {
+        background-color: #9b0020 !important;
+        transform: scale(1.02);
+    }
+
+    /* METRIC CARD */
+    div[data-testid="metric-container"] {
+        background-color: #0B1733;
+        border: 1px solid #710014;
+        padding: 15px;
+        border-radius: 15px;
+    }
+
+    /* DATAFRAME */
+    .stDataFrame {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    /* LABEL */
+    label {
+        color: white !important;
+        font-weight: 600;
+    }
+
+</style>
+""", unsafe_allow_html=True)
+
 st.title("Quality Gate Preforming Monitoring System")
 
-# =====================================================
-# COLUMN TEMPLATE
-# =====================================================
 COLUMNS = [
     "No","Tanggal","Shift","No HP","Layer HP",
     "Kode Mold","No Lot","Keterangan"
 ]
 
-# =====================================================
-# SESSION STATE
-# =====================================================
 if "db" not in st.session_state:
     st.session_state["db"] = pd.DataFrame(columns=COLUMNS)
 
-# =====================================================
-# SIDEBAR
-# =====================================================
 st.sidebar.header("Data Management")
 
 uploaded_file = st.sidebar.file_uploader("Upload Excel", type=["xlsx"])
@@ -57,14 +127,16 @@ if uploaded_file:
     except Exception as e:
         st.sidebar.error(f"Error : {e}")
 
-# =====================================================
-# INPUT DATA
-# =====================================================
 st.sidebar.header("Input Data")
 
 with st.sidebar.form("form", clear_on_submit=True):
 
-    tgl = st.date_input("Tanggal", datetime.today())
+    tgl = st.date_input(
+        "Tanggal",
+        datetime.today(),
+        format="DD/MM/YYYY"
+    )
+
     shift = st.selectbox("Shift", [1,2,3])
     hp = st.selectbox("No HP", [f"HP{i:02d}" for i in range(1,31)])
     layer = st.selectbox("Layer HP", [1,2,3,4,5])
@@ -78,7 +150,8 @@ with st.sidebar.form("form", clear_on_submit=True):
         df = st.session_state["db"].copy()
 
         new = pd.DataFrame([{
-            "Tanggal": tgl.strftime("%Y-%m-%d"),
+
+            "Tanggal": tgl.strftime("%d/%m/%Y"),
             "Shift": shift,
             "No HP": hp,
             "Layer HP": layer,
@@ -97,21 +170,20 @@ with st.sidebar.form("form", clear_on_submit=True):
         st.session_state["db"] = df
         st.success("Data berhasil ditambahkan")
 
-# =====================================================
-# LOAD DATA
-# =====================================================
 df = st.session_state["db"].copy()
 
 if df.empty:
     st.warning("Belum ada data")
     st.stop()
 
-df["Tanggal"] = pd.to_datetime(df["Tanggal"], errors="coerce", dayfirst=True)
+df["Tanggal"] = pd.to_datetime(
+    df["Tanggal"],
+    format="%d/%m/%Y",
+    errors="coerce"
+)
+
 df["is_ng"] = df["Keterangan"].astype(str).str.upper().ne("OK").astype(int)
 
-# =====================================================
-# FILTER
-# =====================================================
 st.subheader("Filter Data")
 
 c1,c2,c3,c4 = st.columns(4)
@@ -129,7 +201,11 @@ with c3:
     )
 
 with c4:
-    f_date = st.date_input("Tanggal Range", [])
+    f_date = st.date_input(
+        "Tanggal Range",
+        [],
+        format="DD/MM/YYYY"
+    )
 
 df_f = df.copy()
 
@@ -148,9 +224,6 @@ if len(f_date) == 2:
         (df_f["Tanggal"] <= pd.to_datetime(f_date[1]))
     ]
 
-# =====================================================
-# KPI
-# =====================================================
 total = len(df_f)
 ng = int(df_f["is_ng"].sum())
 ok = total - ng
@@ -165,9 +238,6 @@ k2.metric("Total NG", ng)
 k3.metric("Persentase NG", f"{defect:.2%}")
 k4.metric("Persentase OK", f"{ok_rate:.2%}")
 
-# =====================================================
-# TOP 5 MACHINE
-# =====================================================
 st.subheader("5 Mesin Hotpress Paling Bermasalah")
 
 top5 = (
@@ -190,9 +260,6 @@ st.dataframe(
     height=250
 )
 
-# =====================================================
-# CHART
-# =====================================================
 st.subheader("Analisis Data")
 
 g1,g2 = st.columns(2)
@@ -205,10 +272,17 @@ with g1:
         x="No HP",
         y="is_ng",
         title="NG per Mesin",
-        text_auto=True
+        text_auto=True,
+        color_discrete_sequence=["#710014"]
     )
 
-    st.plotly_chart(fig1, width="stretch", theme="streamlit")
+    fig1.update_layout(
+        plot_bgcolor="#0B1733",
+        paper_bgcolor="#0B1733",
+        font_color="white"
+    )
+
+    st.plotly_chart(fig1, width="stretch", theme=None)
 
 with g2:
     cacat = df_f[df_f["is_ng"] == 1]["Keterangan"].value_counts().reset_index()
@@ -219,25 +293,35 @@ with g2:
         names="Jenis Cacat",
         values="Jumlah",
         title="Distribusi Defect",
-        hole=0.45
+        hole=0.45,
+        color_discrete_sequence=[
+            "#710014",
+            "#9b0020",
+            "#C1121F",
+            "#081F44"
+        ]
     )
 
-    st.plotly_chart(fig2, width="stretch", theme="streamlit")
+    fig2.update_layout(
+        plot_bgcolor="#0B1733",
+        paper_bgcolor="#0B1733",
+        font_color="white"
+    )
 
-# =====================================================
-# TABLE
-# =====================================================
+    st.plotly_chart(fig2, width="stretch", theme=None)
+
 st.subheader("Tabel Data")
 
+# FORMAT TAMPIL TANGGAL
+df_show = df_f.copy()
+df_show["Tanggal"] = df_show["Tanggal"].dt.strftime("%d/%m/%Y")
+
 st.dataframe(
-    df_f[COLUMNS],
+    df_show[COLUMNS],
     width="stretch",
     height=450
 )
 
-# =====================================================
-# DELETE
-# =====================================================
 st.subheader("Hapus Data")
 
 hapus = st.number_input(
@@ -254,16 +338,21 @@ if st.button("Hapus"):
     st.session_state["db"] = df
     st.success("Data berhasil dihapus")
 
-# =====================================================
-# DOWNLOAD
-# =====================================================
 st.subheader("Download Data")
 
 def convert_excel(data):
+
+    export = data.copy()
+
+    export["Tanggal"] = pd.to_datetime(
+        export["Tanggal"],
+        errors="coerce"
+    ).dt.strftime("%d/%m/%Y")
+
     output = io.BytesIO()
 
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        data[COLUMNS].to_excel(writer, index=False)
+        export[COLUMNS].to_excel(writer, index=False)
 
     return output.getvalue()
 
