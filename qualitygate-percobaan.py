@@ -9,91 +9,6 @@ st.set_page_config(
     layout="wide"
 )
 
-st.markdown("""
-<style>
-
-    /* BACKGROUND */
-    .stApp {
-        background-color: #081F44;
-        color: white;
-    }
-
-    /* TITLE */
-    h1, h2, h3 {
-        color: white !important;
-        font-weight: 700;
-    }
-
-    /* SIDEBAR */
-    section[data-testid="stSidebar"] {
-        background-color: #710014;
-    }
-
-    section[data-testid="stSidebar"] * {
-        color: white !important;
-    }
-
-    /* INPUT BOX */
-    .stTextInput input,
-    .stDateInput input,
-    .stNumberInput input,
-    .stSelectbox div[data-baseweb="select"] > div {
-        background-color: #0B1733 !important;
-        color: white !important;
-        border: 1px solid #710014 !important;
-        border-radius: 10px !important;
-    }
-
-    /* MULTISELECT */
-    .stMultiSelect div[data-baseweb="select"] > div {
-        background-color: #0B1733 !important;
-        border-radius: 10px !important;
-        border: 1px solid #710014 !important;
-        color: white !important;
-    }
-
-    /* BUTTON */
-    .stButton>button,
-    .stDownloadButton>button,
-    .stFormSubmitButton>button {
-        background-color: #710014 !important;
-        color: white !important;
-        border-radius: 10px !important;
-        border: none !important;
-        font-weight: bold;
-        transition: 0.3s;
-    }
-
-    .stButton>button:hover,
-    .stDownloadButton>button:hover,
-    .stFormSubmitButton>button:hover {
-        background-color: #9b0020 !important;
-        transform: scale(1.02);
-    }
-
-    /* METRIC CARD */
-    div[data-testid="metric-container"] {
-        background-color: #0B1733;
-        border: 1px solid #710014;
-        padding: 15px;
-        border-radius: 15px;
-    }
-
-    /* DATAFRAME */
-    .stDataFrame {
-        border-radius: 15px;
-        overflow: hidden;
-    }
-
-    /* LABEL */
-    label {
-        color: white !important;
-        font-weight: 600;
-    }
-
-</style>
-""", unsafe_allow_html=True)
-
 st.title("Quality Gate Preforming Monitoring System")
 
 COLUMNS = [
@@ -111,6 +26,7 @@ uploaded_file = st.sidebar.file_uploader("Upload Excel", type=["xlsx"])
 if uploaded_file:
     try:
         df_upload = pd.read_excel(uploaded_file)
+
         df_upload.columns = [str(c).strip() for c in df_upload.columns]
         df_upload = df_upload.loc[:, ~df_upload.columns.duplicated()]
 
@@ -122,6 +38,7 @@ if uploaded_file:
         df_upload["No"] = range(1, len(df_upload)+1)
 
         st.session_state["db"] = df_upload
+
         st.sidebar.success("Upload berhasil")
 
     except Exception as e:
@@ -138,19 +55,33 @@ with st.sidebar.form("form", clear_on_submit=True):
     )
 
     shift = st.selectbox("Shift", [1,2,3])
-    hp = st.selectbox("No HP", [f"HP{i:02d}" for i in range(1,31)])
-    layer = st.selectbox("Layer HP", [1,2,3,4,5])
+
+    hp = st.selectbox(
+        "No HP",
+        [f"HP{i:02d}" for i in range(1,31)]
+    )
+
+    layer = st.selectbox(
+        "Layer HP",
+        [1,2,3,4,5]
+    )
+
     mold = st.text_input("Kode Mold")
+
     lot = st.text_input("No Lot")
-    ket = st.selectbox("Keterangan", ["OK","Visual","Dimensi","Visual Dimensi"])
+
+    ket = st.selectbox(
+        "Keterangan",
+        ["OK","Visual","Dimensi","Visual Dimensi"]
+    )
 
     submit = st.form_submit_button("Tambah Data")
 
     if submit:
+
         df = st.session_state["db"].copy()
 
         new = pd.DataFrame([{
-
             "Tanggal": tgl.strftime("%d/%m/%Y"),
             "Shift": shift,
             "No HP": hp,
@@ -168,6 +99,7 @@ with st.sidebar.form("form", clear_on_submit=True):
         df["No"] = range(1, len(df)+1)
 
         st.session_state["db"] = df
+
         st.success("Data berhasil ditambahkan")
 
 df = st.session_state["db"].copy()
@@ -182,17 +114,29 @@ df["Tanggal"] = pd.to_datetime(
     errors="coerce"
 )
 
-df["is_ng"] = df["Keterangan"].astype(str).str.upper().ne("OK").astype(int)
+df["is_ng"] = (
+    df["Keterangan"]
+    .astype(str)
+    .str.upper()
+    .ne("OK")
+    .astype(int)
+)
 
 st.subheader("Filter Data")
 
 c1,c2,c3,c4 = st.columns(4)
 
 with c1:
-    f_shift = st.multiselect("Shift", sorted(df["Shift"].dropna().unique()))
+    f_shift = st.multiselect(
+        "Shift",
+        sorted(df["Shift"].dropna().unique())
+    )
 
 with c2:
-    f_hp = st.multiselect("No HP", sorted(df["No HP"].dropna().unique()))
+    f_hp = st.multiselect(
+        "No HP",
+        sorted(df["No HP"].dropna().unique())
+    )
 
 with c3:
     f_ket = st.multiselect(
@@ -225,17 +169,23 @@ if len(f_date) == 2:
     ]
 
 total = len(df_f)
+
 ng = int(df_f["is_ng"].sum())
+
 ok = total - ng
 
 defect = ng/total if total > 0 else 0
+
 ok_rate = ok/total if total > 0 else 0
 
 k1,k2,k3,k4 = st.columns(4)
 
 k1.metric("Total Check", total)
+
 k2.metric("Total NG", ng)
+
 k3.metric("Persentase NG", f"{defect:.2%}")
+
 k4.metric("Persentase OK", f"{ok_rate:.2%}")
 
 st.subheader("5 Mesin Hotpress Paling Bermasalah")
@@ -265,55 +215,58 @@ st.subheader("Analisis Data")
 g1,g2 = st.columns(2)
 
 with g1:
-    mesin = df_f.groupby("No HP")["is_ng"].sum().reset_index()
+
+    mesin = (
+        df_f.groupby("No HP")["is_ng"]
+        .sum()
+        .reset_index()
+    )
 
     fig1 = px.bar(
         mesin,
         x="No HP",
         y="is_ng",
         title="NG per Mesin",
-        text_auto=True,
-        color_discrete_sequence=["#710014"]
+        text_auto=True
     )
 
-    fig1.update_layout(
-        plot_bgcolor="#0B1733",
-        paper_bgcolor="#0B1733",
-        font_color="white"
+    st.plotly_chart(
+        fig1,
+        width="stretch",
+        theme="streamlit"
     )
-
-    st.plotly_chart(fig1, width="stretch", theme=None)
 
 with g2:
-    cacat = df_f[df_f["is_ng"] == 1]["Keterangan"].value_counts().reset_index()
-    cacat.columns = ["Jenis Cacat", "Jumlah"]
+
+    cacat = (
+        df_f[df_f["is_ng"] == 1]["Keterangan"]
+        .value_counts()
+        .reset_index()
+    )
+
+    cacat.columns = [
+        "Jenis Cacat",
+        "Jumlah"
+    ]
 
     fig2 = px.pie(
         cacat,
         names="Jenis Cacat",
         values="Jumlah",
         title="Distribusi Defect",
-        hole=0.45,
-        color_discrete_sequence=[
-            "#710014",
-            "#9b0020",
-            "#C1121F",
-            "#081F44"
-        ]
+        hole=0.45
     )
 
-    fig2.update_layout(
-        plot_bgcolor="#0B1733",
-        paper_bgcolor="#0B1733",
-        font_color="white"
+    st.plotly_chart(
+        fig2,
+        width="stretch",
+        theme="streamlit"
     )
-
-    st.plotly_chart(fig2, width="stretch", theme=None)
 
 st.subheader("Tabel Data")
 
-# FORMAT TAMPIL TANGGAL
 df_show = df_f.copy()
+
 df_show["Tanggal"] = df_show["Tanggal"].dt.strftime("%d/%m/%Y")
 
 st.dataframe(
@@ -331,11 +284,15 @@ hapus = st.number_input(
 )
 
 if st.button("Hapus"):
+
     df = st.session_state["db"]
+
     df = df[df["No"] != hapus]
+
     df["No"] = range(1, len(df)+1)
 
     st.session_state["db"] = df
+
     st.success("Data berhasil dihapus")
 
 st.subheader("Download Data")
@@ -344,15 +301,23 @@ def convert_excel(data):
 
     export = data.copy()
 
-    export["Tanggal"] = pd.to_datetime(
-        export["Tanggal"],
-        errors="coerce"
-    ).dt.strftime("%d/%m/%Y")
+    if "Tanggal" in export.columns:
+        export["Tanggal"] = pd.to_datetime(
+            export["Tanggal"],
+            errors="coerce"
+        ).dt.strftime("%d/%m/%Y")
 
     output = io.BytesIO()
 
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        export[COLUMNS].to_excel(writer, index=False)
+    with pd.ExcelWriter(
+        output,
+        engine="openpyxl"
+    ) as writer:
+
+        export[COLUMNS].to_excel(
+            writer,
+            index=False
+        )
 
     return output.getvalue()
 
