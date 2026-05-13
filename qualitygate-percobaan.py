@@ -60,7 +60,7 @@ section[data-testid="stSidebar"] * {
 section[data-testid="stSidebar"] label {
     color: white !important;
     font-weight: 700 !important;
-    font-size: 16px !important;
+    font-size: 15px !important;
     opacity: 1 !important;
 }
 
@@ -87,11 +87,21 @@ section[data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] > div {
     min-height: 48px !important;
 }
 
-/* Text selectbox */
+/* Isi selectbox */
 section[data-testid="stSidebar"] .stSelectbox span {
     color: white !important;
     font-weight: 600 !important;
     opacity: 1 !important;
+}
+
+/* Dropdown list */
+div[role="listbox"] {
+    background-color: #12337A !important;
+}
+
+div[role="option"] {
+    color: white !important;
+    background-color: #12337A !important;
 }
 
 /* Date input */
@@ -101,12 +111,11 @@ section[data-testid="stSidebar"] .stDateInput input {
     font-weight: 600 !important;
 }
 
-/* Form */
-[data-testid="stForm"] {
-    background: rgba(255,255,255,0.06);
-    padding: 18px;
-    border-radius: 18px;
-    border: 1px solid rgba(255,255,255,0.12);
+/* Upload box */
+section[data-testid="stSidebar"] [data-testid="stFileUploader"] {
+    background-color: rgba(255,255,255,0.08);
+    padding: 12px;
+    border-radius: 14px;
 }
 
 /* =========================
@@ -213,6 +222,16 @@ SUCCESS BOX
 ========================= */
 .stSuccess {
     border-radius: 12px;
+}
+
+/* =========================
+FORM
+========================= */
+[data-testid="stForm"] {
+    background: rgba(255,255,255,0.06);
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.12);
 }
 
 </style>
@@ -426,22 +445,14 @@ with c1:
 
     f_shift = st.multiselect(
         "Shift",
-        sorted(
-            df["Shift"]
-            .dropna()
-            .unique()
-        )
+        sorted(df["Shift"].dropna().unique())
     )
 
 with c2:
 
     f_hp = st.multiselect(
         "No HP",
-        sorted(
-            df["No HP"]
-            .dropna()
-            .unique()
-        )
+        sorted(df["No HP"].dropna().unique())
     )
 
 with c3:
@@ -462,19 +473,13 @@ with c4:
 df_f = df.copy()
 
 if f_shift:
-    df_f = df_f[
-        df_f["Shift"].isin(f_shift)
-    ]
+    df_f = df_f[df_f["Shift"].isin(f_shift)]
 
 if f_hp:
-    df_f = df_f[
-        df_f["No HP"].isin(f_hp)
-    ]
+    df_f = df_f[df_f["No HP"].isin(f_hp)]
 
 if f_ket:
-    df_f = df_f[
-        df_f["Keterangan"].isin(f_ket)
-    ]
+    df_f = df_f[df_f["Keterangan"].isin(f_ket)]
 
 if len(f_date) == 2:
 
@@ -493,13 +498,9 @@ if len(f_date) == 2:
 # =====================================================
 jumlah_layer_jalan = len(df_f)
 
-jumlah_layer_ok = int(
-    df_f["is_ok"].sum()
-)
+jumlah_layer_ok = int(df_f["is_ok"].sum())
 
-jumlah_layer_ng = int(
-    df_f["is_ng"].sum()
-)
+jumlah_layer_ng = int(df_f["is_ng"].sum())
 
 akurasi_ok = (
     jumlah_layer_ok /
@@ -543,7 +544,7 @@ with k4:
     """, unsafe_allow_html=True)
 
 # =====================================================
-# TABEL JUMLAH DEFECT
+# TABEL JUMLAH DEFECT BERDASARKAN KATEGORI
 # =====================================================
 st.markdown(
     '<div class="section-title">JUMLAH DEFECT BERDASARKAN KATEGORI</div>',
