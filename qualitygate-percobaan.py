@@ -9,7 +9,6 @@ import io
 # =====================================================
 # PAGE CONFIG
 # =====================================================
-
 st.set_page_config(
     page_title="Quality Gate Monitoring",
     layout="wide",
@@ -19,138 +18,121 @@ st.set_page_config(
 # =====================================================
 # CUSTOM CSS
 # =====================================================
-
 st.markdown("""
 <style>
 
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
-
-html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
-    background-color: #eef2f7;
+/* ===== BACKGROUND ===== */
+.stApp {
+    background-color: #f3f5f9;
+    font-family: 'Segoe UI', sans-serif;
 }
 
-/* MAIN AREA */
-.main {
-    background-color: #eef2f7;
-}
-
+/* ===== MAIN CONTAINER ===== */
 .block-container {
     padding-top: 1rem;
     padding-bottom: 2rem;
-    max-width: 95%;
+    padding-left: 2rem;
+    padding-right: 2rem;
 }
 
-/* SIDEBAR */
+/* ===== SIDEBAR ===== */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(
-        180deg,
-        #0b1f4d 0%,
-        #132f73 100%
-    );
-    border-right: 4px solid #991b1b;
+    background: linear-gradient(180deg, #0B1F4D 0%, #163D8C 100%);
+    border-right: 3px solid #8B0000;
 }
 
 section[data-testid="stSidebar"] * {
     color: white !important;
 }
 
-/* HEADER */
-.dashboard-header {
-    background: white;
-    padding: 30px 40px;
-    border-radius: 22px;
-    border-left: 10px solid #991b1b;
-    box-shadow: 0 4px 18px rgba(0,0,0,0.08);
-    margin-bottom: 25px;
-}
-
+/* ===== TITLE ===== */
 .dashboard-title {
-    font-family: 'Oswald', sans-serif;
-    font-size: 48px;
-    font-weight: 700;
-    color: #111827;
+    font-size: 42px;
+    font-weight: 900;
+    color: #111111;
     letter-spacing: 1px;
+    margin-bottom: 5px;
 }
 
 .dashboard-subtitle {
-    margin-top: 10px;
-    font-size: 16px;
-    color: #6b7280;
+    font-size: 17px;
     font-weight: 500;
+    color: #666666;
+    margin-bottom: 25px;
 }
 
-/* SECTION TITLE */
-.section-title {
-    font-family: 'Oswald', sans-serif;
-    font-size: 28px;
-    color: #111827;
-    margin-top: 20px;
-    margin-bottom: 15px;
-    letter-spacing: 0.5px;
+/* ===== CARD ===== */
+.custom-card {
+    background-color: white;
+    padding: 22px;
+    border-radius: 18px;
+    border-left: 8px solid #8B0000;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    margin-bottom: 18px;
 }
 
-/* KPI CARD */
+/* ===== KPI CARD ===== */
 .kpi-card {
-    background: linear-gradient(
-        135deg,
-        #0f172a 0%,
-        #1e3a8a 100%
-    );
+    background: white;
+    border-radius: 18px;
     padding: 24px;
-    border-radius: 20px;
-    border-top: 5px solid #991b1b;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.10);
-    color: white;
-    margin-bottom: 10px;
+    border-top: 6px solid #0B1F4D;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    text-align: center;
 }
 
 .kpi-title {
     font-size: 15px;
+    color: #555;
     font-weight: 600;
-    color: #dbeafe;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .kpi-value {
-    font-size: 38px;
-    font-weight: 700;
-    color: white;
+    font-size: 34px;
+    font-weight: 800;
+    color: #8B0000;
 }
 
-/* CHART */
+/* ===== SECTION TITLE ===== */
+.section-title {
+    font-size: 24px;
+    font-weight: 800;
+    color: #0B1F4D;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+/* ===== DATAFRAME ===== */
+[data-testid="stDataFrame"] {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #d9d9d9;
+}
+
+/* ===== PLOT ===== */
 .stPlotlyChart {
     background: white;
-    padding: 15px;
-    border-radius: 22px;
-    border-top: 5px solid #991b1b;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    border-radius: 18px;
+    padding: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
 }
 
-/* TABLE */
-[data-testid="stDataFrame"] {
-    background: white;
-    border-radius: 22px;
-    padding: 12px;
-    border-top: 5px solid #991b1b;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-}
-
-/* BUTTON */
+/* ===== BUTTON ===== */
 .stButton>button {
-    background: #991b1b;
+    background-color: #8B0000;
     color: white;
+    border-radius: 10px;
     border: none;
-    border-radius: 12px;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .stDownloadButton>button {
-    background: #0b1f4d;
+    background-color: #0B1F4D;
     color: white;
+    border-radius: 10px;
     border: none;
-    border-radius: 12px;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 </style>
@@ -159,10 +141,8 @@ section[data-testid="stSidebar"] * {
 # =====================================================
 # HEADER
 # =====================================================
-
 st.markdown("""
-<div class="dashboard-header">
-
+<div class="custom-card">
     <div class="dashboard-title">
         QUALITY GATE MONITORING SYSTEM
     </div>
@@ -170,14 +150,12 @@ st.markdown("""
     <div class="dashboard-subtitle">
         Internal Quality Monitoring Dashboard
     </div>
-
 </div>
 """, unsafe_allow_html=True)
 
 # =====================================================
 # COLUMN FORMAT
 # =====================================================
-
 COLUMNS = [
     "No",
     "Tanggal",
@@ -205,14 +183,12 @@ DEFECT_LIST = [
 # =====================================================
 # SESSION STATE
 # =====================================================
-
 if "db" not in st.session_state:
     st.session_state["db"] = pd.DataFrame(columns=COLUMNS)
 
 # =====================================================
 # SIDEBAR
 # =====================================================
-
 st.sidebar.markdown("## DATA MANAGEMENT")
 
 uploaded_file = st.sidebar.file_uploader(
@@ -229,6 +205,11 @@ if uploaded_file:
         df_upload.columns = [
             str(c).strip()
             for c in df_upload.columns
+        ]
+
+        df_upload = df_upload.loc[
+            :,
+            ~df_upload.columns.duplicated()
         ]
 
         for col in COLUMNS:
@@ -252,7 +233,6 @@ if uploaded_file:
 # =====================================================
 # INPUT FORM
 # =====================================================
-
 st.sidebar.markdown("## INPUT DATA")
 
 with st.sidebar.form("form", clear_on_submit=True):
@@ -287,7 +267,9 @@ with st.sidebar.form("form", clear_on_submit=True):
         DEFECT_LIST
     )
 
-    submit = st.form_submit_button("Tambah Data")
+    submit = st.form_submit_button(
+        "Tambah Data"
+    )
 
     if submit:
 
@@ -323,7 +305,6 @@ with st.sidebar.form("form", clear_on_submit=True):
 # =====================================================
 # LOAD DATA
 # =====================================================
-
 df = st.session_state["db"].copy()
 
 if df.empty:
@@ -333,7 +314,6 @@ if df.empty:
 # =====================================================
 # DATA CLEANING
 # =====================================================
-
 df["Tanggal"] = pd.to_datetime(
     df["Tanggal"],
     format="%d/%m/%Y",
@@ -359,26 +339,33 @@ df["is_ok"] = (
 # =====================================================
 # FILTER
 # =====================================================
-
 st.markdown(
     '<div class="section-title">FILTER DATA</div>',
     unsafe_allow_html=True
 )
 
-c1, c2, c3, c4 = st.columns(4)
+c1,c2,c3,c4 = st.columns(4)
 
 with c1:
 
     f_shift = st.multiselect(
         "Shift",
-        sorted(df["Shift"].dropna().unique())
+        sorted(
+            df["Shift"]
+            .dropna()
+            .unique()
+        )
     )
 
 with c2:
 
     f_hp = st.multiselect(
         "No HP",
-        sorted(df["No HP"].dropna().unique())
+        sorted(
+            df["No HP"]
+            .dropna()
+            .unique()
+        )
     )
 
 with c3:
@@ -399,13 +386,19 @@ with c4:
 df_f = df.copy()
 
 if f_shift:
-    df_f = df_f[df_f["Shift"].isin(f_shift)]
+    df_f = df_f[
+        df_f["Shift"].isin(f_shift)
+    ]
 
 if f_hp:
-    df_f = df_f[df_f["No HP"].isin(f_hp)]
+    df_f = df_f[
+        df_f["No HP"].isin(f_hp)
+    ]
 
 if f_ket:
-    df_f = df_f[df_f["Keterangan"].isin(f_ket)]
+    df_f = df_f[
+        df_f["Keterangan"].isin(f_ket)
+    ]
 
 if len(f_date) == 2:
 
@@ -422,83 +415,63 @@ if len(f_date) == 2:
 # =====================================================
 # KPI
 # =====================================================
-
 jumlah_layer_jalan = len(df_f)
 
-jumlah_layer_ok = int(df_f["is_ok"].sum())
+jumlah_layer_ok = int(
+    df_f["is_ok"].sum()
+)
 
-jumlah_layer_ng = int(df_f["is_ng"].sum())
+jumlah_layer_ng = int(
+    df_f["is_ng"].sum()
+)
 
+# =====================================================
+# AKURASI SESUAI RUMUS BARU
+# =====================================================
 akurasi_ok = (
     jumlah_layer_ok /
-    jumlah_layer_jalan
-    if jumlah_layer_jalan > 0
+    (jumlah_layer_ok + jumlah_layer_jalan)
+    if (jumlah_layer_ok + jumlah_layer_jalan) > 0
     else 0
 )
 
-st.markdown(
-    '<div class="section-title">PERFORMANCE OVERVIEW</div>',
-    unsafe_allow_html=True
-)
-
-k1, k2, k3, k4 = st.columns(4)
+k1,k2,k3,k4 = st.columns(4)
 
 with k1:
     st.markdown(f"""
     <div class="kpi-card">
-        <div class="kpi-title">
-            JUMLAH LAYER JALAN
-        </div>
-
-        <div class="kpi-value">
-            {jumlah_layer_jalan}
-        </div>
+        <div class="kpi-title">JUMLAH LAYER JALAN</div>
+        <div class="kpi-value">{jumlah_layer_jalan}</div>
     </div>
     """, unsafe_allow_html=True)
 
 with k2:
     st.markdown(f"""
     <div class="kpi-card">
-        <div class="kpi-title">
-            JUMLAH LAYER OK
-        </div>
-
-        <div class="kpi-value">
-            {jumlah_layer_ok}
-        </div>
+        <div class="kpi-title">JUMLAH LAYER OK</div>
+        <div class="kpi-value">{jumlah_layer_ok}</div>
     </div>
     """, unsafe_allow_html=True)
 
 with k3:
     st.markdown(f"""
     <div class="kpi-card">
-        <div class="kpi-title">
-            JUMLAH LAYER NG
-        </div>
-
-        <div class="kpi-value">
-            {jumlah_layer_ng}
-        </div>
+        <div class="kpi-title">JUMLAH DEFECT</div>
+        <div class="kpi-value">{jumlah_layer_ng}</div>
     </div>
     """, unsafe_allow_html=True)
 
 with k4:
     st.markdown(f"""
     <div class="kpi-card">
-        <div class="kpi-title">
-            AKURASI OK
-        </div>
-
-        <div class="kpi-value">
-            {akurasi_ok:.2%}
-        </div>
+        <div class="kpi-title">AKURASI OK</div>
+        <div class="kpi-value">{akurasi_ok:.2%}</div>
     </div>
     """, unsafe_allow_html=True)
 
 # =====================================================
 # COMBO CHART
 # =====================================================
-
 st.markdown(
     '<div class="section-title">MONITORING HARIAN</div>',
     unsafe_allow_html=True
@@ -521,7 +494,7 @@ daily.columns = [
 
 daily["Akurasi"] = (
     daily["Layer OK"] /
-    daily["Layer Jalan"]
+    (daily["Layer OK"] + daily["Layer Jalan"])
 )
 
 fig_combo = make_subplots(
@@ -533,7 +506,7 @@ fig_combo.add_trace(
         x=daily["Tanggal"],
         y=daily["Layer Jalan"],
         name="Jumlah Layer Jalan",
-        marker_color="#1e3a8a"
+        marker_color="#0B1F4D"
     ),
     secondary_y=False
 )
@@ -543,16 +516,23 @@ fig_combo.add_trace(
         x=daily["Tanggal"],
         y=daily["Akurasi"],
         mode="lines+markers",
-        name="Akurasi OK",
-        line=dict(color="#991b1b", width=4)
+        name="Akurasi",
+        line=dict(color="#8B0000", width=4)
     ),
     secondary_y=True
 )
 
 fig_combo.update_layout(
-    template="plotly_white",
     height=500,
-    hovermode="x unified"
+    template="plotly_white",
+    hovermode="x unified",
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1.02,
+        xanchor="right",
+        x=1
+    )
 )
 
 fig_combo.update_yaxes(
@@ -572,10 +552,9 @@ st.plotly_chart(
 )
 
 # =====================================================
-# TOP TABLE
+# TOP TABLES
 # =====================================================
-
-t1, t2 = st.columns(2)
+t1,t2 = st.columns(2)
 
 with t1:
 
@@ -597,6 +576,11 @@ with t1:
             ascending=False
         )
         .head(5)
+    )
+
+    top_hp.index = range(
+        1,
+        len(top_hp)+1
     )
 
     st.dataframe(
@@ -627,6 +611,11 @@ with t2:
         .head(5)
     )
 
+    top_mold.index = range(
+        1,
+        len(top_mold)+1
+    )
+
     st.dataframe(
         top_mold,
         width="stretch",
@@ -634,15 +623,14 @@ with t2:
     )
 
 # =====================================================
-# ANALYSIS
+# ANALYSIS CHART
 # =====================================================
-
 st.markdown(
     '<div class="section-title">ANALISIS DATA</div>',
     unsafe_allow_html=True
 )
 
-g1, g2 = st.columns(2)
+g1,g2 = st.columns(2)
 
 with g1:
 
@@ -656,13 +644,17 @@ with g1:
         mesin,
         x="No HP",
         y="is_ng",
-        title="Jumlah Defect per Mesin",
         text_auto=True
     )
 
+    fig1.update_traces(
+        marker_color="#0B1F4D"
+    )
+
     fig1.update_layout(
+        title="Jumlah Defect per Mesin",
         template="plotly_white",
-        height=450
+        height=420
     )
 
     st.plotly_chart(
@@ -688,12 +680,13 @@ with g2:
         cacat,
         names="Jenis Defect",
         values="Jumlah",
-        hole=0.5
+        hole=0.45
     )
 
     fig2.update_layout(
+        title="Distribusi Jenis Defect",
         template="plotly_white",
-        height=450
+        height=420
     )
 
     st.plotly_chart(
@@ -704,7 +697,6 @@ with g2:
 # =====================================================
 # TABLE DATA
 # =====================================================
-
 st.markdown(
     '<div class="section-title">TABEL DATA</div>',
     unsafe_allow_html=True
@@ -726,7 +718,6 @@ st.dataframe(
 # =====================================================
 # DELETE DATA
 # =====================================================
-
 st.markdown(
     '<div class="section-title">HAPUS DATA</div>',
     unsafe_allow_html=True
@@ -758,7 +749,6 @@ if st.button("Hapus"):
 # =====================================================
 # DOWNLOAD
 # =====================================================
-
 st.markdown(
     '<div class="section-title">DOWNLOAD DATA</div>',
     unsafe_allow_html=True
