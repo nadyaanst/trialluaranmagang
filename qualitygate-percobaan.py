@@ -51,22 +51,62 @@ section[data-testid="stSidebar"] {
     border-right: 4px solid #8B0000;
 }
 
+/* Semua text sidebar */
 section[data-testid="stSidebar"] * {
     color: white !important;
 }
 
+/* Label */
 section[data-testid="stSidebar"] label {
     color: white !important;
-    font-weight: 600;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    opacity: 1 !important;
 }
 
-section[data-testid="stSidebar"] .stTextInput input,
-section[data-testid="stSidebar"] .stSelectbox div,
-section[data-testid="stSidebar"] .stDateInput input {
-    background-color: rgba(255,255,255,0.12);
-    border-radius: 10px;
+/* Input */
+section[data-testid="stSidebar"] input,
+section[data-testid="stSidebar"] textarea {
+    background-color: rgba(255,255,255,0.18) !important;
     color: white !important;
-    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px !important;
+    border: 1px solid rgba(255,255,255,0.25) !important;
+    font-weight: 600 !important;
+}
+
+/* Placeholder */
+section[data-testid="stSidebar"] input::placeholder {
+    color: rgba(255,255,255,0.8) !important;
+}
+
+/* Selectbox */
+section[data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] > div {
+    background-color: rgba(255,255,255,0.18) !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255,255,255,0.25) !important;
+    min-height: 48px !important;
+}
+
+/* Text selectbox */
+section[data-testid="stSidebar"] .stSelectbox span {
+    color: white !important;
+    font-weight: 600 !important;
+    opacity: 1 !important;
+}
+
+/* Date input */
+section[data-testid="stSidebar"] .stDateInput input {
+    background-color: rgba(255,255,255,0.18) !important;
+    color: white !important;
+    font-weight: 600 !important;
+}
+
+/* Form */
+[data-testid="stForm"] {
+    background: rgba(255,255,255,0.06);
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.12);
 }
 
 /* =========================
@@ -175,23 +215,12 @@ SUCCESS BOX
     border-radius: 12px;
 }
 
-/* =========================
-INPUT FORM BOX
-========================= */
-[data-testid="stForm"] {
-    background: rgba(255,255,255,0.05);
-    padding: 18px;
-    border-radius: 18px;
-    border: 1px solid rgba(255,255,255,0.1);
-}
-
 </style>
 """, unsafe_allow_html=True)
 
 # =====================================================
 # HEADER
 # =====================================================
-
 st.markdown("""
 <div class="dashboard-container">
     <div class="dashboard-title">
@@ -472,9 +501,6 @@ jumlah_layer_ng = int(
     df_f["is_ng"].sum()
 )
 
-# =====================================================
-# AKURASI SESUAI RUMUS BARU
-# =====================================================
 akurasi_ok = (
     jumlah_layer_ok /
     (jumlah_layer_ok + jumlah_layer_jalan)
@@ -517,317 +543,45 @@ with k4:
     """, unsafe_allow_html=True)
 
 # =====================================================
-# COMBO CHART
+# TABEL JUMLAH DEFECT
 # =====================================================
 st.markdown(
-    '<div class="section-title">MONITORING HARIAN</div>',
+    '<div class="section-title">JUMLAH DEFECT BERDASARKAN KATEGORI</div>',
     unsafe_allow_html=True
 )
 
-daily = (
-    df_f.groupby("Tanggal")
-    .agg({
-        "Layer HP":"count",
-        "is_ok":"sum"
-    })
+kategori_order = [
+    "Dimensi",
+    "Visual",
+    "Visual Dimensi",
+    "OK",
+    "Dimensi Panjang",
+    "Dimensi Lebar",
+    "Dimensi Tebal",
+    "Dimensi Panjang & Lebar",
+    "Dimensi Panjang & Tebal",
+    "Dimensi Lebar & Tebal"
+]
+
+kategori_df = (
+    df_f["Keterangan"]
+    .value_counts()
+    .reindex(kategori_order, fill_value=0)
     .reset_index()
 )
 
-daily.columns = [
-    "Tanggal",
-    "Layer Jalan",
-    "Layer OK"
+kategori_df.columns = [
+    "Kategori Defect",
+    "Jumlah"
 ]
 
-daily["Akurasi"] = (
-    daily["Layer OK"] /
-    (daily["Layer OK"] + daily["Layer Jalan"])
-)
-
-fig_combo = make_subplots(
-    specs=[[{"secondary_y": True}]]
-)
-
-fig_combo.add_trace(
-    go.Bar(
-        x=daily["Tanggal"],
-        y=daily["Layer Jalan"],
-        name="Jumlah Layer Jalan",
-        marker_color="#0B1F4D"
-    ),
-    secondary_y=False
-)
-
-fig_combo.add_trace(
-    go.Scatter(
-        x=daily["Tanggal"],
-        y=daily["Akurasi"],
-        mode="lines+markers",
-        name="Akurasi",
-        line=dict(color="#8B0000", width=4)
-    ),
-    secondary_y=True
-)
-
-fig_combo.update_layout(
-    height=500,
-    template="plotly_white",
-    hovermode="x unified",
-    legend=dict(
-        orientation="h",
-        yanchor="bottom",
-        y=1.02,
-        xanchor="right",
-        x=1
-    )
-)
-
-fig_combo.update_yaxes(
-    title_text="Jumlah Layer",
-    secondary_y=False
-)
-
-fig_combo.update_yaxes(
-    title_text="Akurasi",
-    tickformat=".0%",
-    secondary_y=True
-)
-
-st.plotly_chart(
-    fig_combo,
-    width="stretch"
-)
-
-# =====================================================
-# TOP TABLES
-# =====================================================
-t1,t2 = st.columns(2)
-
-with t1:
-
-    st.markdown(
-        '<div class="section-title">TOP 5 MESIN HOTPRESS BERMASALAH</div>',
-        unsafe_allow_html=True
-    )
-
-    top_hp = (
-        df_f.groupby("No HP")["is_ng"]
-        .sum()
-        .reset_index()
-        .rename(columns={
-            "No HP":"Mesin Hotpress",
-            "is_ng":"Jumlah Defect"
-        })
-        .sort_values(
-            by="Jumlah Defect",
-            ascending=False
-        )
-        .head(5)
-    )
-
-    top_hp.index = range(
-        1,
-        len(top_hp)+1
-    )
-
-    st.dataframe(
-        top_hp,
-        width="stretch",
-        height=250
-    )
-
-with t2:
-
-    st.markdown(
-        '<div class="section-title">TOP 5 MOLDING BERMASALAH</div>',
-        unsafe_allow_html=True
-    )
-
-    top_mold = (
-        df_f.groupby("Kode Mold")["is_ng"]
-        .sum()
-        .reset_index()
-        .rename(columns={
-            "Kode Mold":"Kode Mold",
-            "is_ng":"Jumlah Defect"
-        })
-        .sort_values(
-            by="Jumlah Defect",
-            ascending=False
-        )
-        .head(5)
-    )
-
-    top_mold.index = range(
-        1,
-        len(top_mold)+1
-    )
-
-    st.dataframe(
-        top_mold,
-        width="stretch",
-        height=250
-    )
-
-# =====================================================
-# ANALYSIS CHART
-# =====================================================
-st.markdown(
-    '<div class="section-title">ANALISIS DATA</div>',
-    unsafe_allow_html=True
-)
-
-g1,g2 = st.columns(2)
-
-with g1:
-
-    mesin = (
-        df_f.groupby("No HP")["is_ng"]
-        .sum()
-        .reset_index()
-    )
-
-    fig1 = px.bar(
-        mesin,
-        x="No HP",
-        y="is_ng",
-        text_auto=True
-    )
-
-    fig1.update_traces(
-        marker_color="#0B1F4D"
-    )
-
-    fig1.update_layout(
-        title="Jumlah Defect per Mesin",
-        template="plotly_white",
-        height=420
-    )
-
-    st.plotly_chart(
-        fig1,
-        width="stretch"
-    )
-
-with g2:
-
-    cacat = (
-        df_f[df_f["is_ng"] == 1]
-        ["Keterangan"]
-        .value_counts()
-        .reset_index()
-    )
-
-    cacat.columns = [
-        "Jenis Defect",
-        "Jumlah"
-    ]
-
-    fig2 = px.pie(
-        cacat,
-        names="Jenis Defect",
-        values="Jumlah",
-        hole=0.45
-    )
-
-    fig2.update_layout(
-        title="Distribusi Jenis Defect",
-        template="plotly_white",
-        height=420
-    )
-
-    st.plotly_chart(
-        fig2,
-        width="stretch"
-    )
-
-# =====================================================
-# TABLE DATA
-# =====================================================
-st.markdown(
-    '<div class="section-title">TABEL DATA</div>',
-    unsafe_allow_html=True
-)
-
-df_show = df_f.copy()
-
-df_show["Tanggal"] = (
-    df_show["Tanggal"]
-    .dt.strftime("%d/%m/%Y")
+kategori_df.index = range(
+    1,
+    len(kategori_df)+1
 )
 
 st.dataframe(
-    df_show[COLUMNS],
+    kategori_df,
     width="stretch",
-    height=450
-)
-
-# =====================================================
-# DELETE DATA
-# =====================================================
-st.markdown(
-    '<div class="section-title">HAPUS DATA</div>',
-    unsafe_allow_html=True
-)
-
-hapus = st.number_input(
-    "Masukkan Nomor Data",
-    min_value=1,
-    step=1
-)
-
-if st.button("Hapus"):
-
-    df = st.session_state["db"]
-
-    df = df[
-        df["No"] != hapus
-    ]
-
-    df["No"] = range(
-        1,
-        len(df)+1
-    )
-
-    st.session_state["db"] = df
-
-    st.success("Data berhasil dihapus")
-
-# =====================================================
-# DOWNLOAD
-# =====================================================
-st.markdown(
-    '<div class="section-title">DOWNLOAD DATA</div>',
-    unsafe_allow_html=True
-)
-
-def convert_excel(data):
-
-    export = data.copy()
-
-    if "Tanggal" in export.columns:
-
-        export["Tanggal"] = pd.to_datetime(
-            export["Tanggal"],
-            errors="coerce"
-        ).dt.strftime("%d/%m/%Y")
-
-    output = io.BytesIO()
-
-    with pd.ExcelWriter(
-        output,
-        engine="openpyxl"
-    ) as writer:
-
-        export[COLUMNS].to_excel(
-            writer,
-            index=False
-        )
-
-    return output.getvalue()
-
-st.download_button(
-    label="Download Excel",
-    data=convert_excel(df),
-    file_name="quality_gate.xlsx"
+    height=420
 )
