@@ -34,45 +34,33 @@ html, body, [class*="css"] {
 }
 
 /* =========================
-MAIN BACKGROUND
+HIDE STREAMLIT
+========================= */
+
+[data-testid="collapsedControl"] {
+    display: none;
+}
+
+#MainMenu {
+    visibility: hidden;
+}
+
+footer {
+    visibility: hidden;
+}
+
+/* =========================
+MAIN
 ========================= */
 
 .main {
-    background-color: #f3f5fa;
+    background-color: #f4f6fb;
 }
 
 .block-container {
     padding-top: 1rem;
-    padding-bottom: 1rem;
+    padding-bottom: 2rem;
     max-width: 100%;
-}
-
-/* =========================
-HEADER
-========================= */
-
-.dashboard-header {
-    background: white;
-    padding: 24px 32px;
-    border-radius: 18px;
-    border-left: 10px solid #c1121f;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    margin-bottom: 20px;
-}
-
-.dashboard-title {
-    font-size: 38px;
-    font-weight: 800;
-    color: #111111;
-    letter-spacing: 1px;
-    line-height: 1.1;
-}
-
-.dashboard-subtitle {
-    font-size: 16px;
-    color: #6b7280;
-    font-weight: 500;
-    margin-top: 8px;
 }
 
 /* =========================
@@ -89,11 +77,37 @@ section[data-testid="stSidebar"] {
 
 section[data-testid="stSidebar"] * {
     color: white !important;
-    font-family: 'Barlow', sans-serif;
 }
 
 section[data-testid="stSidebar"] label {
     font-weight: 700 !important;
+}
+
+/* =========================
+HEADER
+========================= */
+
+.dashboard-header {
+    background: white;
+    padding: 25px 35px;
+    border-radius: 22px;
+    border-left: 10px solid #c1121f;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
+}
+
+.dashboard-title {
+    font-size: 42px;
+    font-weight: 800;
+    color: #111111;
+    letter-spacing: 1px;
+}
+
+.dashboard-subtitle {
+    font-size: 16px;
+    color: #6b7280;
+    font-weight: 500;
+    margin-top: 8px;
 }
 
 /* =========================
@@ -104,8 +118,8 @@ SECTION TITLE
     font-size: 24px;
     font-weight: 800;
     color: #1d2f6f;
-    margin-top: 12px;
-    margin-bottom: 14px;
+    margin-top: 20px;
+    margin-bottom: 12px;
     text-transform: uppercase;
 }
 
@@ -122,7 +136,7 @@ KPI CARD
     border-top: 8px solid #1d2f6f;
 }
 
-.kpi-card-red {
+.kpi-red {
     border-top: 8px solid #c1121f;
 }
 
@@ -131,8 +145,7 @@ KPI CARD
     font-weight: 700;
     color: #6b7280;
     text-transform: uppercase;
-    margin-bottom: 12px;
-    letter-spacing: 0.5px;
+    margin-bottom: 10px;
 }
 
 .kpi-value {
@@ -148,16 +161,16 @@ CARD
 .card {
     background: white;
     border-radius: 18px;
-    padding: 16px;
+    padding: 18px;
     box-shadow: 0 4px 18px rgba(0,0,0,0.08);
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
 
 .card-title {
     font-size: 18px;
     font-weight: 800;
     color: #1d2f6f;
-    text-transform: uppercase;
+    margin-bottom: 10px;
 }
 
 /* =========================
@@ -165,20 +178,20 @@ TABLE
 ========================= */
 
 [data-testid="stDataFrame"] {
+    background: white;
     border-radius: 18px;
     overflow: hidden;
     border: 1px solid #e5e7eb;
-    background: white;
 }
 
 /* =========================
-CHART
+PLOTLY CHART
 ========================= */
 
 .stPlotlyChart {
     background: white;
     border-radius: 18px;
-    padding: 10px;
+    padding: 12px;
     box-shadow: 0 4px 18px rgba(0,0,0,0.08);
 }
 
@@ -225,6 +238,7 @@ BUTTON
 
 st.markdown("""
 <div class="dashboard-header">
+
     <div class="dashboard-title">
         QUALITY GATE MONITORING SYSTEM
     </div>
@@ -232,6 +246,7 @@ st.markdown("""
     <div class="dashboard-subtitle">
         Internal Quality Monitoring Dashboard
     </div>
+
 </div>
 """, unsafe_allow_html=True)
 
@@ -440,22 +455,14 @@ with c1:
 
     f_shift = st.multiselect(
         "Shift",
-        sorted(
-            df["Shift"]
-            .dropna()
-            .unique()
-        )
+        sorted(df["Shift"].dropna().unique())
     )
 
 with c2:
 
     f_hp = st.multiselect(
         "No HP",
-        sorted(
-            df["No HP"]
-            .dropna()
-            .unique()
-        )
+        sorted(df["No HP"].dropna().unique())
     )
 
 with c3:
@@ -476,19 +483,13 @@ with c4:
 df_f = df.copy()
 
 if f_shift:
-    df_f = df_f[
-        df_f["Shift"].isin(f_shift)
-    ]
+    df_f = df_f[df_f["Shift"].isin(f_shift)]
 
 if f_hp:
-    df_f = df_f[
-        df_f["No HP"].isin(f_hp)
-    ]
+    df_f = df_f[df_f["No HP"].isin(f_hp)]
 
 if f_ket:
-    df_f = df_f[
-        df_f["Keterangan"].isin(f_ket)
-    ]
+    df_f = df_f[df_f["Keterangan"].isin(f_ket)]
 
 if len(f_date) == 2:
 
@@ -562,7 +563,7 @@ with k2:
 with k3:
 
     st.markdown(f"""
-    <div class="kpi-card kpi-card-red">
+    <div class="kpi-card kpi-red">
         <div class="kpi-title">
             Jumlah Layer NG
         </div>
@@ -593,7 +594,7 @@ with k4:
 
 st.markdown("""
 <div class="section-title">
-Trend Harian Layer dan Akurasi
+Monitoring Harian
 </div>
 """, unsafe_allow_html=True)
 
@@ -652,36 +653,267 @@ fig_combo.add_trace(
 fig_combo.update_layout(
     paper_bgcolor="white",
     plot_bgcolor="white",
-
+    height=500,
+    hovermode="x unified",
     font=dict(
         family="Barlow",
-        size=13,
-        color="#111111"
-    ),
-
-    legend=dict(
-        orientation="h",
-        y=1.08
-    ),
-
-    hovermode="x unified",
-    height=500
+        size=13
+    )
 )
 
 fig_combo.update_yaxes(
     title_text="Jumlah Layer",
-    secondary_y=False,
-    gridcolor="#e5e7eb"
+    secondary_y=False
 )
 
 fig_combo.update_yaxes(
     title_text="Akurasi",
     tickformat=".0%",
-    secondary_y=True,
-    gridcolor="#e5e7eb"
+    secondary_y=True
 )
 
 st.plotly_chart(
     fig_combo,
     width="stretch"
+)
+
+# =====================================================
+# TOP TABLES
+# =====================================================
+
+t1,t2 = st.columns(2)
+
+with t1:
+
+    st.markdown("""
+    <div class="section-title">
+    5 Mesin Hotpress Paling Bermasalah
+    </div>
+    """, unsafe_allow_html=True)
+
+    top_hp = (
+        df_f.groupby("No HP")["is_ng"]
+        .sum()
+        .reset_index()
+        .rename(columns={
+            "No HP":"Mesin Hotpress",
+            "is_ng":"Jumlah Defect"
+        })
+        .sort_values(
+            by="Jumlah Defect",
+            ascending=False
+        )
+        .head(5)
+    )
+
+    top_hp.index = range(
+        1,
+        len(top_hp)+1
+    )
+
+    st.dataframe(
+        top_hp,
+        width="stretch",
+        height=250
+    )
+
+with t2:
+
+    st.markdown("""
+    <div class="section-title">
+    5 Molding Paling Bermasalah
+    </div>
+    """, unsafe_allow_html=True)
+
+    top_mold = (
+        df_f.groupby("Kode Mold")["is_ng"]
+        .sum()
+        .reset_index()
+        .rename(columns={
+            "Kode Mold":"Kode Mold",
+            "is_ng":"Jumlah Defect"
+        })
+        .sort_values(
+            by="Jumlah Defect",
+            ascending=False
+        )
+        .head(5)
+    )
+
+    top_mold.index = range(
+        1,
+        len(top_mold)+1
+    )
+
+    st.dataframe(
+        top_mold,
+        width="stretch",
+        height=250
+    )
+
+# =====================================================
+# ANALYSIS CHART
+# =====================================================
+
+st.markdown("""
+<div class="section-title">
+Analisis Defect
+</div>
+""", unsafe_allow_html=True)
+
+g1,g2 = st.columns(2)
+
+with g1:
+
+    mesin = (
+        df_f.groupby("No HP")["is_ng"]
+        .sum()
+        .reset_index()
+    )
+
+    fig1 = px.bar(
+        mesin,
+        x="No HP",
+        y="is_ng",
+        title="Jumlah Defect per Mesin",
+        text_auto=True
+    )
+
+    fig1.update_layout(
+        template="plotly_white",
+        height=420
+    )
+
+    st.plotly_chart(
+        fig1,
+        width="stretch"
+    )
+
+with g2:
+
+    cacat = (
+        df_f[df_f["is_ng"] == 1]
+        ["Keterangan"]
+        .value_counts()
+        .reset_index()
+    )
+
+    cacat.columns = [
+        "Jenis Defect",
+        "Jumlah"
+    ]
+
+    fig2 = px.pie(
+        cacat,
+        names="Jenis Defect",
+        values="Jumlah",
+        title="Distribusi Jenis Defect",
+        hole=0.45
+    )
+
+    fig2.update_layout(
+        template="plotly_white",
+        height=420
+    )
+
+    st.plotly_chart(
+        fig2,
+        width="stretch"
+    )
+
+# =====================================================
+# TABLE DATA
+# =====================================================
+
+st.markdown("""
+<div class="section-title">
+Tabel Data
+</div>
+""", unsafe_allow_html=True)
+
+df_show = df_f.copy()
+
+df_show["Tanggal"] = (
+    df_show["Tanggal"]
+    .dt.strftime("%d/%m/%Y")
+)
+
+st.dataframe(
+    df_show[COLUMNS],
+    width="stretch",
+    height=450
+)
+
+# =====================================================
+# DELETE DATA
+# =====================================================
+
+st.markdown("""
+<div class="section-title">
+Hapus Data
+</div>
+""", unsafe_allow_html=True)
+
+hapus = st.number_input(
+    "Masukkan Nomor Data",
+    min_value=1,
+    step=1
+)
+
+if st.button("Hapus"):
+
+    df = st.session_state["db"]
+
+    df = df[
+        df["No"] != hapus
+    ]
+
+    df["No"] = range(
+        1,
+        len(df)+1
+    )
+
+    st.session_state["db"] = df
+
+    st.success("Data berhasil dihapus")
+
+# =====================================================
+# DOWNLOAD
+# =====================================================
+
+st.markdown("""
+<div class="section-title">
+Download Data
+</div>
+""", unsafe_allow_html=True)
+
+def convert_excel(data):
+
+    export = data.copy()
+
+    if "Tanggal" in export.columns:
+
+        export["Tanggal"] = pd.to_datetime(
+            export["Tanggal"],
+            errors="coerce"
+        ).dt.strftime("%d/%m/%Y")
+
+    output = io.BytesIO()
+
+    with pd.ExcelWriter(
+        output,
+        engine="openpyxl"
+    ) as writer:
+
+        export[COLUMNS].to_excel(
+            writer,
+            index=False
+        )
+
+    return output.getvalue()
+
+st.download_button(
+    label="Download Excel",
+    data=convert_excel(df),
+    file_name="quality_gate.xlsx"
 )
