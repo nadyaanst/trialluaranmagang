@@ -21,118 +21,168 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-/* ===== BACKGROUND ===== */
+/* =========================
+MAIN APP
+========================= */
 .stApp {
-    background-color: #f3f5f9;
+    background-color: #f1f4f9;
     font-family: 'Segoe UI', sans-serif;
 }
 
-/* ===== MAIN CONTAINER ===== */
+/* =========================
+MAIN CONTAINER
+========================= */
 .block-container {
     padding-top: 1rem;
-    padding-bottom: 2rem;
     padding-left: 2rem;
     padding-right: 2rem;
+    padding-bottom: 2rem;
 }
 
-/* ===== SIDEBAR ===== */
+/* =========================
+SIDEBAR
+========================= */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0B1F4D 0%, #163D8C 100%);
-    border-right: 3px solid #8B0000;
+    background: linear-gradient(
+        180deg,
+        #081F5C 0%,
+        #12337A 100%
+    );
+    border-right: 4px solid #8B0000;
 }
 
 section[data-testid="stSidebar"] * {
     color: white !important;
 }
 
-/* ===== TITLE ===== */
-.dashboard-title {
-    font-size: 42px;
-    font-weight: 900;
-    color: #111111;
-    letter-spacing: 1px;
-    margin-bottom: 5px;
+section[data-testid="stSidebar"] label {
+    color: white !important;
+    font-weight: 600;
 }
 
-.dashboard-subtitle {
-    font-size: 17px;
-    font-weight: 500;
-    color: #666666;
+section[data-testid="stSidebar"] .stTextInput input,
+section[data-testid="stSidebar"] .stSelectbox div,
+section[data-testid="stSidebar"] .stDateInput input {
+    background-color: rgba(255,255,255,0.12);
+    border-radius: 10px;
+    color: white !important;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+/* =========================
+TITLE
+========================= */
+.dashboard-container {
+    background: white;
+    padding: 28px;
+    border-radius: 22px;
+    border-left: 10px solid #8B0000;
+    box-shadow: 0 5px 18px rgba(0,0,0,0.08);
     margin-bottom: 25px;
 }
 
-/* ===== CARD ===== */
-.custom-card {
-    background-color: white;
-    padding: 22px;
-    border-radius: 18px;
-    border-left: 8px solid #8B0000;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+.dashboard-title {
+    font-size: 52px;
+    font-weight: 900;
+    color: #111111;
+    letter-spacing: 1px;
+    margin-bottom: 0;
+}
+
+/* =========================
+SECTION TITLE
+========================= */
+.section-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: #081F5C;
+    margin-top: 15px;
     margin-bottom: 18px;
 }
 
-/* ===== KPI CARD ===== */
+/* =========================
+KPI CARD
+========================= */
 .kpi-card {
     background: white;
-    border-radius: 18px;
+    border-radius: 20px;
     padding: 24px;
-    border-top: 6px solid #0B1F4D;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border-top: 6px solid #081F5C;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
     text-align: center;
 }
 
 .kpi-title {
-    font-size: 15px;
-    color: #555;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 700;
+    color: #666;
     margin-bottom: 10px;
 }
 
 .kpi-value {
     font-size: 34px;
-    font-weight: 800;
+    font-weight: 900;
     color: #8B0000;
 }
 
-/* ===== SECTION TITLE ===== */
-.section-title {
-    font-size: 24px;
-    font-weight: 800;
-    color: #0B1F4D;
-    margin-top: 15px;
-    margin-bottom: 15px;
-}
-
-/* ===== DATAFRAME ===== */
+/* =========================
+DATAFRAME
+========================= */
 [data-testid="stDataFrame"] {
-    border-radius: 14px;
+    border-radius: 16px;
     overflow: hidden;
     border: 1px solid #d9d9d9;
+    background: white;
 }
 
-/* ===== PLOT ===== */
+/* =========================
+CHART
+========================= */
 .stPlotlyChart {
     background: white;
-    border-radius: 18px;
-    padding: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border-radius: 20px;
+    padding: 14px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
 }
 
-/* ===== BUTTON ===== */
+/* =========================
+BUTTON
+========================= */
 .stButton>button {
     background-color: #8B0000;
     color: white;
     border-radius: 10px;
     border: none;
     font-weight: 700;
+    width: 100%;
+    height: 45px;
 }
 
 .stDownloadButton>button {
-    background-color: #0B1F4D;
+    background-color: #081F5C;
     color: white;
     border-radius: 10px;
     border: none;
     font-weight: 700;
+    width: 100%;
+    height: 45px;
+}
+
+/* =========================
+SUCCESS BOX
+========================= */
+.stSuccess {
+    border-radius: 12px;
+}
+
+/* =========================
+INPUT FORM BOX
+========================= */
+[data-testid="stForm"] {
+    background: rgba(255,255,255,0.05);
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
 </style>
@@ -141,14 +191,11 @@ section[data-testid="stSidebar"] * {
 # =====================================================
 # HEADER
 # =====================================================
+
 st.markdown("""
-<div class="custom-card">
+<div class="dashboard-container">
     <div class="dashboard-title">
         QUALITY GATE MONITORING SYSTEM
-    </div>
-
-    <div class="dashboard-subtitle">
-        Internal Quality Monitoring Dashboard
     </div>
 </div>
 """, unsafe_allow_html=True)
