@@ -2,180 +2,651 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from datetime import datetime
 import io
 
-# Konfigurasi Halaman agar Dashboard Luas
 st.set_page_config(
-    page_title="Quality Gate Monitoring - Indoprima",
-    layout="wide"
+    page_title="Quality Gate Monitoring",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# Custom Styling (Inspirasi dari image_65de59.jpg)
+# =========================
+# CUSTOM CSS
+# =========================
 st.markdown("""
-    <style>
-    .main { background-color: #f8f9fa; }
-    .stMetric {
-        background-color: #ffffff;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        border-top: 5px solid #0056b3;
-    }
-    div[data-testid="stForm"] {
-        border-radius: 15px;
-        background-color: #ffffff;
-        padding: 20px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+<style>
 
+.main {
+    background-color: #f5f7fb;
+}
+
+.block-container {
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+}
+
+h1, h2, h3 {
+    font-weight: 700;
+}
+
+[data-testid="stMetric"] {
+    background: white;
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid #eaeaea;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+[data-testid="stDataFrame"] {
+    background: white;
+    border-radius: 18px;
+    padding: 10px;
+}
+
+.stPlotlyChart {
+    background: white;
+    border-radius: 18px;
+    padding: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+section[data-testid="stSidebar"] {
+    background-color: #ffffff;
+    border-right: 1px solid #ececec;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# =========================
+# TITLE
+# =========================
 st.title("📊 Quality Gate Preforming Monitoring System")
 
-# Definisi Kolom berdasarkan image_65da99.png
-COLUMNS = ["No", "Tanggal", "Shift", "No HP", "Layer HP", "Kode Mold", "No Lot", "Keterangan"]
-DEFECT_OPTIONS = [
-    "OK", "Visual", "Dimensi", "Visual Dimensi", 
-    "Dimensi Panjang", "Dimensi Lebar", "Dimensi Tebal", 
-    "Dimensi Panjang & Lebar", "Dimensi Panjang & Tebal", "Dimensi Lebar & Tebal"
+# =========================
+# COLUMN FORMAT
+# =========================
+COLUMNS = [
+    "No",
+    "Tanggal",
+    "Shift",
+    "No HP",
+    "Layer HP",
+    "Kode Mold",
+    "No Lot",
+    "Keterangan"
 ]
 
+DEFECT_LIST = [
+    "OK",
+    "Visual",
+    "Dimensi",
+    "Visual Dimensi",
+    "Dimensi Panjang",
+    "Dimensi Lebar",
+    "Dimensi Tebal",
+    "Dimensi Panjang & Lebar",
+    "Dimensi Panjang & Tebal",
+    "Dimensi Lebar & Tebal"
+]
+
+# =========================
+# SESSION STATE
+# =========================
 if "db" not in st.session_state:
     st.session_state["db"] = pd.DataFrame(columns=COLUMNS)
 
-# --- SIDEBAR: MANAGEMENT & INPUT ---
-st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Logo_Indoprima.png/250px-Logo_Indoprima.png", width=200) # Contoh placeholder logo
+# =========================
+# SIDEBAR
+# =========================
 st.sidebar.header("📁 Data Management")
 
-# Fitur Upload Excel (image_65da99.png)
-uploaded_file = st.sidebar.file_uploader("Upload File Excel", type=["xlsx"])
+uploaded_file = st.sidebar.file_uploader(
+    "Upload Excel",
+    type=["xlsx"]
+)
 
 if uploaded_file:
+
     try:
+
         df_upload = pd.read_excel(uploaded_file)
-        df_upload.columns = [str(c).strip() for c in df_upload.columns]
-        
-        # Validasi kolom agar sesuai dengan image_65da99.png
+
+        df_upload.columns = [
+            str(c).strip()
+            for c in df_upload.columns
+        ]
+
+        df_upload = df_upload.loc[
+            :,
+            ~df_upload.columns.duplicated()
+        ]
+
         for col in COLUMNS:
             if col not in df_upload.columns:
                 df_upload[col] = ""
-        
+
         df_upload = df_upload[COLUMNS]
-        df_upload["No"] = range(1, len(df_upload)+1)
+
+        df_upload["No"] = range(
+            1,
+            len(df_upload)+1
+        )
+
         st.session_state["db"] = df_upload
-        st.sidebar.success("✅ File berhasil dimuat!")
+
+        st.sidebar.success("✅ Upload berhasil")
+
     except Exception as e:
-        st.sidebar.error(f"Gagal memproses file: {e}")
+        st.sidebar.error(f"Error : {e}")
 
-st.sidebar.divider()
-st.sidebar.header("📝 Input Manual")
-with st.sidebar.form("form_input", clear_on_submit=True):
-    t_tgl = st.date_input("Tanggal", datetime.today())
-    t_shift = st.selectbox("Shift", [1, 2, 3])
-    t_hp = st.selectbox("No HP", [f"HP{i:02d}" for i in range(1, 31)])
-    t_layer = st.selectbox("Layer HP", [1, 2, 3, 4, 5])
-    t_mold = st.text_input("Kode Mold")
-    t_lot = st.text_input("No Lot")
-    t_ket = st.selectbox("Keterangan", DEFECT_OPTIONS)
-    
-    if st.form_submit_button("Tambah ke Database"):
-        df_new = pd.DataFrame([{
-            "Tanggal": t_tgl.strftime("%d/%m/%Y"),
-            "Shift": t_shift, "No HP": t_hp, "Layer HP": t_layer,
-            "Kode Mold": t_mold, "No Lot": t_lot, "Keterangan": t_ket
+# =========================
+# INPUT FORM
+# =========================
+st.sidebar.header("➕ Input Data")
+
+with st.sidebar.form("form", clear_on_submit=True):
+
+    tgl = st.date_input(
+        "Tanggal",
+        datetime.today(),
+        format="DD/MM/YYYY"
+    )
+
+    shift = st.selectbox(
+        "Shift",
+        [1,2,3]
+    )
+
+    hp = st.selectbox(
+        "No HP",
+        [f"HP{i:02d}" for i in range(1,31)]
+    )
+
+    layer = st.selectbox(
+        "Layer HP",
+        [1,2,3,4,5]
+    )
+
+    mold = st.text_input("Kode Mold")
+
+    lot = st.text_input("No Lot")
+
+    ket = st.selectbox(
+        "Keterangan",
+        DEFECT_LIST
+    )
+
+    submit = st.form_submit_button(
+        "Tambah Data"
+    )
+
+    if submit:
+
+        df = st.session_state["db"].copy()
+
+        new = pd.DataFrame([{
+            "Tanggal": tgl.strftime("%d/%m/%Y"),
+            "Shift": shift,
+            "No HP": hp,
+            "Layer HP": layer,
+            "Kode Mold": mold,
+            "No Lot": lot,
+            "Keterangan": ket
         }])
-        current_db = st.session_state["db"].copy()
-        updated_db = pd.concat([current_db.drop(columns=["No"], errors="ignore"), df_new], ignore_index=True)
-        updated_db["No"] = range(1, len(updated_db)+1)
-        st.session_state["db"] = updated_db
-        st.success("Data berhasil ditambahkan!")
 
-# --- MAIN DASHBOARD ---
-df_master = st.session_state["db"].copy()
+        df = pd.concat(
+            [
+                df.drop(columns=["No"], errors="ignore"),
+                new
+            ],
+            ignore_index=True
+        )
 
-if df_master.empty:
-    st.info("Silakan unggah file Excel atau masukkan data manual untuk melihat statistik.")
+        df["No"] = range(
+            1,
+            len(df)+1
+        )
+
+        st.session_state["db"] = df
+
+        st.success("✅ Data berhasil ditambahkan")
+
+# =========================
+# LOAD DATA
+# =========================
+df = st.session_state["db"].copy()
+
+if df.empty:
+    st.warning("Belum ada data")
     st.stop()
 
-# Konversi Tanggal untuk perhitungan
-df_master["Tanggal_DT"] = pd.to_datetime(df_master["Tanggal"], dayfirst=True, errors="coerce")
-df_master["is_ng"] = df_master["Keterangan"].astype(str).str.upper().ne("OK").astype(int)
-df_master["is_ok"] = df_master["Keterangan"].astype(str).str.upper().eq("OK").astype(int)
-
-# --- FILTER DATA SECTION (image_65da75.png) ---
-st.subheader("🔍 Filter Data")
-f1, f2, f3, f4 = st.columns(4)
-
-with f1:
-    f_shift = st.multiselect("Shift", sorted(df_master["Shift"].unique()))
-with f2:
-    f_hp = st.multiselect("No HP", sorted(df_master["No HP"].unique()))
-with f3:
-    f_ket = st.multiselect("Keterangan", DEFECT_OPTIONS)
-with f4:
-    f_range = st.date_input("Tanggal Range", [])
-
-# Logika Filter
-df_f = df_master.copy()
-if f_shift: df_f = df_f[df_f["Shift"].isin(f_shift)]
-if f_hp: df_f = df_f[df_f["No HP"].isin(f_hp)]
-if f_ket: df_f = df_f[df_f["Keterangan"].isin(f_ket)]
-if len(f_range) == 2:
-    df_f = df_f[(df_f["Tanggal_DT"] >= pd.to_datetime(f_range[0])) & 
-                (df_f["Tanggal_DT"] <= pd.to_datetime(f_range[1]))]
-
-# --- SCORECARDS ---
-total_jalan = len(df_f)
-total_ok = int(df_f["is_ok"].sum())
-akurasi = total_ok / total_jalan if total_jalan > 0 else 0
-
-m1, m2, m3 = st.columns(3)
-m1.metric("Jumlah Layer Jalan", f"{total_jalan} pcs")
-m2.metric("Jumlah Layer OK", f"{total_ok} pcs")
-m3.metric("Akurasi OK", f"{akurasi:.2%}")
-
-# --- COMBO CHART ---
-st.subheader("📈 Analisis Tren Harian")
-daily = df_f.groupby(df_f["Tanggal_DT"].dt.date).agg(
-    total_jalan=('No', 'count'),
-    total_ok=('is_ok', 'sum')
-).reset_index()
-daily["akurasi"] = (daily["total_ok"] / daily["total_jalan"]) * 100
-
-fig = go.Figure()
-fig.add_trace(go.Bar(x=daily["Tanggal_DT"], y=daily["total_jalan"], name="Total Jalan", marker_color='#0056b3'))
-fig.add_trace(go.Scatter(x=daily["Tanggal_DT"], y=daily["akurasi"], name="Akurasi (%)", yaxis="y2", line=dict(color='#d32f2f', width=3)))
-
-fig.update_layout(
-    yaxis=dict(title="Volume Produksi"),
-    yaxis2=dict(title="Akurasi (%)", overlaying="y", side="right", range=[0, 105]),
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+# =========================
+# DATA CLEANING
+# =========================
+df["Tanggal"] = pd.to_datetime(
+    df["Tanggal"],
+    format="%d/%m/%Y",
+    errors="coerce"
 )
-st.plotly_chart(fig, use_container_width=True)
 
-# --- TOP 5 SECTION ---
-c_top1, c_top2 = st.columns(2)
+df["is_ng"] = (
+    df["Keterangan"]
+    .astype(str)
+    .str.upper()
+    .ne("OK")
+    .astype(int)
+)
 
-with c_top1:
-    st.subheader("🔥 Top 5 Mesin Hotpress (NG)")
-    top_hp = df_f.groupby("No HP")["is_ng"].sum().reset_index().sort_values("is_ng", ascending=False).head(5)
-    st.dataframe(top_hp.rename(columns={"is_ng": "Jumlah NG"}), use_container_width=True)
+df["is_ok"] = (
+    df["Keterangan"]
+    .astype(str)
+    .str.upper()
+    .eq("OK")
+    .astype(int)
+)
 
-with c_top2:
-    st.subheader("🏗️ Top 5 Molding (NG)")
-    top_mold = df_f.groupby("Kode Mold")["is_ng"].sum().reset_index().sort_values("is_ng", ascending=False).head(5)
-    st.dataframe(top_mold.rename(columns={"is_ng": "Jumlah NG"}), use_container_width=True)
+# =========================
+# FILTER
+# =========================
+st.subheader("🔍 Filter Data")
 
-# --- DATA TABLE & EXPORT ---
-st.subheader("📋 Detail Data Terfilter")
-st.dataframe(df_f[COLUMNS], use_container_width=True)
+c1,c2,c3,c4 = st.columns(4)
 
-# Tombol Download
-excel_file = io.BytesIO()
-with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
-    df_f[COLUMNS].to_excel(writer, index=False)
+with c1:
+
+    f_shift = st.multiselect(
+        "Shift",
+        sorted(
+            df["Shift"]
+            .dropna()
+            .unique()
+        )
+    )
+
+with c2:
+
+    f_hp = st.multiselect(
+        "No HP",
+        sorted(
+            df["No HP"]
+            .dropna()
+            .unique()
+        )
+    )
+
+with c3:
+
+    f_ket = st.multiselect(
+        "Keterangan",
+        DEFECT_LIST
+    )
+
+with c4:
+
+    f_date = st.date_input(
+        "Tanggal Range",
+        [],
+        format="DD/MM/YYYY"
+    )
+
+df_f = df.copy()
+
+if f_shift:
+    df_f = df_f[
+        df_f["Shift"].isin(f_shift)
+    ]
+
+if f_hp:
+    df_f = df_f[
+        df_f["No HP"].isin(f_hp)
+    ]
+
+if f_ket:
+    df_f = df_f[
+        df_f["Keterangan"].isin(f_ket)
+    ]
+
+if len(f_date) == 2:
+
+    df_f = df_f[
+        (
+            df_f["Tanggal"] >= pd.to_datetime(f_date[0])
+        )
+        &
+        (
+            df_f["Tanggal"] <= pd.to_datetime(f_date[1])
+        )
+    ]
+
+# =========================
+# KPI SCORECARD
+# =========================
+jumlah_layer_jalan = len(df_f)
+
+jumlah_layer_ok = int(
+    df_f["is_ok"].sum()
+)
+
+jumlah_layer_ng = int(
+    df_f["is_ng"].sum()
+)
+
+akurasi_ok = (
+    jumlah_layer_ok /
+    (jumlah_layer_ok + jumlah_layer_ng)
+    if (jumlah_layer_ok + jumlah_layer_ng) > 0
+    else 0
+)
+
+st.subheader("📌 Score Card")
+
+k1,k2,k3,k4 = st.columns(4)
+
+k1.metric(
+    "Jumlah Layer Jalan",
+    f"{jumlah_layer_jalan}"
+)
+
+k2.metric(
+    "Jumlah Layer OK",
+    f"{jumlah_layer_ok}"
+)
+
+k3.metric(
+    "Jumlah Layer NG",
+    f"{jumlah_layer_ng}"
+)
+
+k4.metric(
+    "Akurasi OK",
+    f"{akurasi_ok:.2%}"
+)
+
+# =========================
+# COMBO CHART
+# =========================
+st.subheader("📈 Monitoring Harian")
+
+daily = (
+    df_f.groupby("Tanggal")
+    .agg({
+        "Layer HP":"count",
+        "is_ok":"sum"
+    })
+    .reset_index()
+)
+
+daily.columns = [
+    "Tanggal",
+    "Layer Jalan",
+    "Layer OK"
+]
+
+daily["Akurasi"] = (
+    daily["Layer OK"] /
+    daily["Layer Jalan"]
+)
+
+fig_combo = make_subplots(
+    specs=[[{"secondary_y": True}]]
+)
+
+fig_combo.add_trace(
+
+    go.Bar(
+        x=daily["Tanggal"],
+        y=daily["Layer Jalan"],
+        name="Jumlah Layer Jalan"
+    ),
+
+    secondary_y=False
+)
+
+fig_combo.add_trace(
+
+    go.Scatter(
+        x=daily["Tanggal"],
+        y=daily["Akurasi"],
+        mode="lines+markers",
+        name="Akurasi OK"
+    ),
+
+    secondary_y=True
+)
+
+fig_combo.update_layout(
+    height=450,
+    template="plotly_white",
+    hovermode="x unified"
+)
+
+fig_combo.update_yaxes(
+    title_text="Jumlah Layer",
+    secondary_y=False
+)
+
+fig_combo.update_yaxes(
+    title_text="Akurasi",
+    tickformat=".0%",
+    secondary_y=True
+)
+
+st.plotly_chart(
+    fig_combo,
+    width="stretch"
+)
+
+# =========================
+# TOP TABLES
+# =========================
+t1,t2 = st.columns(2)
+
+with t1:
+
+    st.subheader("⚠️ 5 Mesin Hotpress Paling Bermasalah")
+
+    top_hp = (
+        df_f.groupby("No HP")["is_ng"]
+        .sum()
+        .reset_index()
+        .rename(columns={
+            "No HP":"Mesin Hotpress",
+            "is_ng":"Jumlah Defect"
+        })
+        .sort_values(
+            by="Jumlah Defect",
+            ascending=False
+        )
+        .head(5)
+    )
+
+    top_hp.index = range(
+        1,
+        len(top_hp)+1
+    )
+
+    st.dataframe(
+        top_hp,
+        width="stretch",
+        height=250
+    )
+
+with t2:
+
+    st.subheader("⚠️ 5 Molding Paling Bermasalah")
+
+    top_mold = (
+        df_f.groupby("Kode Mold")["is_ng"]
+        .sum()
+        .reset_index()
+        .rename(columns={
+            "Kode Mold":"Kode Mold",
+            "is_ng":"Jumlah Defect"
+        })
+        .sort_values(
+            by="Jumlah Defect",
+            ascending=False
+        )
+        .head(5)
+    )
+
+    top_mold.index = range(
+        1,
+        len(top_mold)+1
+    )
+
+    st.dataframe(
+        top_mold,
+        width="stretch",
+        height=250
+    )
+
+# =========================
+# ANALYSIS CHART
+# =========================
+st.subheader("📊 Analisis Data")
+
+g1,g2 = st.columns(2)
+
+with g1:
+
+    mesin = (
+        df_f.groupby("No HP")["is_ng"]
+        .sum()
+        .reset_index()
+    )
+
+    fig1 = px.bar(
+        mesin,
+        x="No HP",
+        y="is_ng",
+        title="Jumlah Defect per Mesin",
+        text_auto=True
+    )
+
+    fig1.update_layout(
+        template="plotly_white",
+        height=420
+    )
+
+    st.plotly_chart(
+        fig1,
+        width="stretch"
+    )
+
+with g2:
+
+    cacat = (
+        df_f[df_f["is_ng"] == 1]
+        ["Keterangan"]
+        .value_counts()
+        .reset_index()
+    )
+
+    cacat.columns = [
+        "Jenis Defect",
+        "Jumlah"
+    ]
+
+    fig2 = px.pie(
+        cacat,
+        names="Jenis Defect",
+        values="Jumlah",
+        title="Distribusi Jenis Defect",
+        hole=0.45
+    )
+
+    fig2.update_layout(
+        template="plotly_white",
+        height=420
+    )
+
+    st.plotly_chart(
+        fig2,
+        width="stretch"
+    )
+
+# =========================
+# TABLE DATA
+# =========================
+st.subheader("📋 Tabel Data")
+
+df_show = df_f.copy()
+
+df_show["Tanggal"] = (
+    df_show["Tanggal"]
+    .dt.strftime("%d/%m/%Y")
+)
+
+st.dataframe(
+    df_show[COLUMNS],
+    width="stretch",
+    height=450
+)
+
+# =========================
+# DELETE DATA
+# =========================
+st.subheader("🗑️ Hapus Data")
+
+hapus = st.number_input(
+    "Masukkan Nomor Data",
+    min_value=1,
+    step=1
+)
+
+if st.button("Hapus"):
+
+    df = st.session_state["db"]
+
+    df = df[
+        df["No"] != hapus
+    ]
+
+    df["No"] = range(
+        1,
+        len(df)+1
+    )
+
+    st.session_state["db"] = df
+
+    st.success("✅ Data berhasil dihapus")
+
+# =========================
+# DOWNLOAD EXCEL
+# =========================
+st.subheader("⬇️ Download Data")
+
+def convert_excel(data):
+
+    export = data.copy()
+
+    if "Tanggal" in export.columns:
+
+        export["Tanggal"] = pd.to_datetime(
+            export["Tanggal"],
+            errors="coerce"
+        ).dt.strftime("%d/%m/%Y")
+
+    output = io.BytesIO()
+
+    with pd.ExcelWriter(
+        output,
+        engine="openpyxl"
+    ) as writer:
+
+        export[COLUMNS].to_excel(
+            writer,
+            index=False
+        )
+
+    return output.getvalue()
+
 st.download_button(
-    label="📥 Download Data ke Excel",
-    data=excel_file.getvalue(),
-    file_name=f"Report_Quality_{datetime.now().strftime('%Y%m%d')}.xlsx"
+    label="📥 Download Excel",
+    data=convert_excel(df),
+    file_name="quality_gate.xlsx"
 )
