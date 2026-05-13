@@ -475,10 +475,10 @@ jumlah_layer_ng = int(
 # =====================================================
 # AKURASI SESUAI RUMUS BARU
 # =====================================================
-akurasi_ok = (
+persentase_ok = (
     jumlah_layer_ok /
-    (jumlah_layer_ok + jumlah_layer_jalan)
-    if (jumlah_layer_ok + jumlah_layer_jalan) > 0
+    jumlah_layer_jalan
+    if jumlah_layer_jalan > 0
     else 0
 )
 
@@ -511,10 +511,14 @@ with k3:
 with k4:
     st.markdown(f"""
     <div class="kpi-card">
-        <div class="kpi-title">AKURASI OK</div>
-        <div class="kpi-value">{akurasi_ok:.2%}</div>
+        <div class="kpi-title">PERSENTASE OK</div>
+        <div class="kpi-value">{persentase_ok:.2%}</div>
     </div>
     """, unsafe_allow_html=True)
+
+# =====================================================
+# COMBO CHART
+# =====================================================
 
 # =====================================================
 # COMBO CHART
@@ -532,6 +536,7 @@ daily = (
         "is_ok":"sum"
     })
     .reset_index()
+    .sort_values("Tanggal")
 )
 
 daily.columns = [
@@ -549,7 +554,7 @@ daily["Persentase OK"] = (
 )
 
 # =====================================================
-# TARGET 100%
+# TARGET
 # =====================================================
 daily["Target"] = 1
 
@@ -561,7 +566,7 @@ fig_combo = make_subplots(
 )
 
 # =====================================================
-# BAR TOTAL LAYER JALAN
+# BAR LAYER JALAN
 # =====================================================
 fig_combo.add_trace(
 
@@ -582,7 +587,7 @@ fig_combo.add_trace(
 )
 
 # =====================================================
-# BAR TOTAL LAYER OK
+# BAR LAYER OK
 # =====================================================
 fig_combo.add_trace(
 
@@ -659,13 +664,16 @@ fig_combo.add_trace(
 # =====================================================
 fig_combo.update_layout(
 
-    height=550,
+    height=560,
 
     template="plotly_white",
 
     hovermode="x unified",
 
     barmode="group",
+
+    plot_bgcolor="white",
+    paper_bgcolor="white",
 
     legend=dict(
         orientation="h",
@@ -681,12 +689,23 @@ fig_combo.update_layout(
         color="#111111"
     ),
 
-    plot_bgcolor="white",
-    paper_bgcolor="white"
+    # =================================================
+    # TAMPILKAN 7 HARI PERTAMA
+    # =================================================
+    xaxis=dict(
+        rangeslider=dict(
+            visible=True
+        ),
+        type="date",
+        range=[
+            daily["Tanggal"].min(),
+            daily["Tanggal"].min() + pd.Timedelta(days=6)
+        ]
+    )
 )
 
 # =====================================================
-# AXIS
+# Y AXIS
 # =====================================================
 fig_combo.update_yaxes(
     title_text="Jumlah Layer",
@@ -709,6 +728,7 @@ st.plotly_chart(
     fig_combo,
     width="stretch"
 )
+
 # =====================================================
 # TOP TABLES
 # =====================================================
@@ -853,7 +873,7 @@ with g2:
     )
 
 # =====================================================
-# VISUALISASI MOLDING
+# VISUALISASI DEFECT MOLDING
 # =====================================================
 st.markdown(
     '<div class="section-title">VISUALISASI DEFECT MOLDING</div>',
@@ -874,35 +894,59 @@ mold_chart = (
     )
 )
 
-fig_mold = px.bar(
-    mold_chart,
-    x="Kode Mold",
-    y="Jumlah Defect",
-    text="Jumlah Defect"
+# =====================================================
+# FIGURE
+# =====================================================
+fig_mold = go.Figure()
+
+fig_mold.add_trace(
+
+    go.Bar(
+        x=mold_chart["Kode Mold"],
+        y=mold_chart["Jumlah Defect"],
+        text=mold_chart["Jumlah Defect"],
+        textposition="outside",
+        marker_color="#8B0000",
+        name="Jumlah Defect"
+    )
 )
 
-fig_mold.update_traces(
-    marker_color="#8B0000",
-    textposition="outside",
-    hovertemplate=
-    "<b>Kode Mold :</b> %{x}<br>" +
-    "<b>Jumlah Defect :</b> %{y}<extra></extra>"
-)
-
+# =====================================================
+# LAYOUT
+# =====================================================
 fig_mold.update_layout(
+
     title={
-        "text":"Jumlah Defect per Molding",
+        "text":"Top Defect Molding",
         "x":0.5
     },
+
     template="plotly_white",
-    height=450,
+
+    height=500,
+
     plot_bgcolor="white",
     paper_bgcolor="white",
+
     xaxis_title="Kode Mold",
     yaxis_title="Jumlah Defect",
+
     font=dict(
         family="Segoe UI",
         size=13
+    ),
+
+    # =================================================
+    # TAMPILKAN 10 MOLD TERATAS
+    # =================================================
+    xaxis=dict(
+        rangeslider=dict(
+            visible=True
+        ),
+        range=[
+            -0.5,
+            9.5
+        ]
     )
 )
 
