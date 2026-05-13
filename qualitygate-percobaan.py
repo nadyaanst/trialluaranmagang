@@ -519,6 +519,7 @@ with k4:
 # =====================================================
 # COMBO CHART
 # =====================================================
+
 st.markdown(
     '<div class="section-title">MONITORING HARIAN</div>',
     unsafe_allow_html=True
@@ -539,65 +540,175 @@ daily.columns = [
     "Layer OK"
 ]
 
-daily["Akurasi"] = (
+# =====================================================
+# PERSENTASE OK
+# =====================================================
+daily["Persentase OK"] = (
     daily["Layer OK"] /
-    (daily["Layer OK"] + daily["Layer Jalan"])
+    daily["Layer Jalan"]
 )
 
+# =====================================================
+# TARGET 100%
+# =====================================================
+daily["Target"] = 1
+
+# =====================================================
+# CREATE FIGURE
+# =====================================================
 fig_combo = make_subplots(
     specs=[[{"secondary_y": True}]]
 )
 
+# =====================================================
+# BAR TOTAL LAYER JALAN
+# =====================================================
 fig_combo.add_trace(
+
     go.Bar(
         x=daily["Tanggal"],
         y=daily["Layer Jalan"],
-        name="Jumlah Layer Jalan",
-        marker_color="#0B1F4D"
+        name="Total Layer Jalan",
+        marker_color="#8B0000",
+        text=daily["Layer Jalan"],
+        textposition="outside",
+        textfont=dict(
+            color="#8B0000",
+            size=12
+        )
     ),
+
     secondary_y=False
 )
 
+# =====================================================
+# BAR TOTAL LAYER OK
+# =====================================================
 fig_combo.add_trace(
+
+    go.Bar(
+        x=daily["Tanggal"],
+        y=daily["Layer OK"],
+        name="Total Layer OK",
+        marker_color="#081F5C",
+        text=daily["Layer OK"],
+        textposition="outside",
+        textfont=dict(
+            color="#081F5C",
+            size=12
+        )
+    ),
+
+    secondary_y=False
+)
+
+# =====================================================
+# LINE PERSENTASE OK
+# =====================================================
+fig_combo.add_trace(
+
     go.Scatter(
         x=daily["Tanggal"],
-        y=daily["Akurasi"],
-        mode="lines+markers",
-        name="Akurasi",
-        line=dict(color="#8B0000", width=4)
+        y=daily["Persentase OK"],
+        mode="lines+markers+text",
+        name="Persentase OK",
+        line=dict(
+            color="#00AEEF",
+            width=4
+        ),
+        marker=dict(
+            size=10,
+            color="#00AEEF"
+        ),
+        text=[
+            f"{x:.1%}"
+            for x in daily["Persentase OK"]
+        ],
+        textposition="top center",
+        textfont=dict(
+            color="#00AEEF",
+            size=12
+        )
     ),
+
     secondary_y=True
 )
 
+# =====================================================
+# LINE TARGET 100%
+# =====================================================
+fig_combo.add_trace(
+
+    go.Scatter(
+        x=daily["Tanggal"],
+        y=daily["Target"],
+        mode="lines",
+        name="Target 100%",
+        line=dict(
+            color="#00C853",
+            width=3,
+            dash="dash"
+        )
+    ),
+
+    secondary_y=True
+)
+
+# =====================================================
+# LAYOUT
+# =====================================================
 fig_combo.update_layout(
-    height=500,
+
+    height=550,
+
     template="plotly_white",
+
     hovermode="x unified",
+
+    barmode="group",
+
     legend=dict(
         orientation="h",
         yanchor="bottom",
         y=1.02,
-        xanchor="right",
-        x=1
-    )
+        xanchor="center",
+        x=0.5
+    ),
+
+    font=dict(
+        family="Segoe UI",
+        size=13,
+        color="#111111"
+    ),
+
+    plot_bgcolor="white",
+    paper_bgcolor="white"
 )
 
+# =====================================================
+# AXIS
+# =====================================================
 fig_combo.update_yaxes(
     title_text="Jumlah Layer",
-    secondary_y=False
+    secondary_y=False,
+    showgrid=True,
+    gridcolor="rgba(0,0,0,0.08)"
 )
 
 fig_combo.update_yaxes(
-    title_text="Akurasi",
+    title_text="Persentase OK",
     tickformat=".0%",
+    range=[0,1.1],
     secondary_y=True
 )
 
+# =====================================================
+# SHOW
+# =====================================================
 st.plotly_chart(
     fig_combo,
     width="stretch"
 )
-
 # =====================================================
 # TOP TABLES
 # =====================================================
@@ -740,6 +851,70 @@ with g2:
         fig2,
         width="stretch"
     )
+
+# =====================================================
+# VISUALISASI MOLDING
+# =====================================================
+st.markdown(
+    '<div class="section-title">VISUALISASI DEFECT MOLDING</div>',
+    unsafe_allow_html=True
+)
+
+mold_chart = (
+    df_f.groupby("Kode Mold")["is_ng"]
+    .sum()
+    .reset_index()
+    .rename(columns={
+        "Kode Mold":"Kode Mold",
+        "is_ng":"Jumlah Defect"
+    })
+    .sort_values(
+        by="Jumlah Defect",
+        ascending=False
+    )
+)
+
+fig_mold = px.bar(
+    mold_chart,
+    x="Kode Mold",
+    y="Jumlah Defect",
+    text="Jumlah Defect"
+)
+
+fig_mold.update_traces(
+    marker_color="#8B0000",
+    textposition="outside",
+    hovertemplate=
+    "<b>Kode Mold :</b> %{x}<br>" +
+    "<b>Jumlah Defect :</b> %{y}<extra></extra>"
+)
+
+fig_mold.update_layout(
+    title={
+        "text":"Jumlah Defect per Molding",
+        "x":0.5
+    },
+    template="plotly_white",
+    height=450,
+    plot_bgcolor="white",
+    paper_bgcolor="white",
+    xaxis_title="Kode Mold",
+    yaxis_title="Jumlah Defect",
+    font=dict(
+        family="Segoe UI",
+        size=13
+    )
+)
+
+fig_mold.update_yaxes(
+    showgrid=True,
+    gridcolor="rgba(0,0,0,0.08)"
+)
+
+st.plotly_chart(
+    fig_mold,
+    width="stretch"
+)
 
 # =====================================================
 # TABEL JUMLAH DEFECT BERDASARKAN KATEGORI
