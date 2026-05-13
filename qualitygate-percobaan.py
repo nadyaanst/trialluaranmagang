@@ -6,68 +6,178 @@ from plotly.subplots import make_subplots
 from datetime import datetime
 import io
 
+# =====================================================
+# PAGE CONFIG
+# =====================================================
+
 st.set_page_config(
     page_title="Quality Gate Monitoring",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# =========================
+# =====================================================
 # CUSTOM CSS
-# =========================
+# =====================================================
+
 st.markdown("""
 <style>
 
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif;
+    background-color: #eef2f7;
+}
+
+/* MAIN AREA */
 .main {
-    background-color: #f5f7fb;
+    background-color: #eef2f7;
 }
 
 .block-container {
     padding-top: 1rem;
     padding-bottom: 2rem;
+    max-width: 95%;
 }
 
-h1, h2, h3 {
+/* SIDEBAR */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(
+        180deg,
+        #0b1f4d 0%,
+        #132f73 100%
+    );
+    border-right: 4px solid #991b1b;
+}
+
+section[data-testid="stSidebar"] * {
+    color: white !important;
+}
+
+/* HEADER */
+.dashboard-header {
+    background: white;
+    padding: 30px 40px;
+    border-radius: 22px;
+    border-left: 10px solid #991b1b;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
+}
+
+.dashboard-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 48px;
     font-weight: 700;
+    color: #111827;
+    letter-spacing: 1px;
 }
 
-[data-testid="stMetric"] {
-    background: white;
-    padding: 18px;
-    border-radius: 18px;
-    border: 1px solid #eaeaea;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+.dashboard-subtitle {
+    margin-top: 10px;
+    font-size: 16px;
+    color: #6b7280;
+    font-weight: 500;
 }
 
-[data-testid="stDataFrame"] {
-    background: white;
-    border-radius: 18px;
-    padding: 10px;
+/* SECTION TITLE */
+.section-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 28px;
+    color: #111827;
+    margin-top: 20px;
+    margin-bottom: 15px;
+    letter-spacing: 0.5px;
 }
 
+/* KPI CARD */
+.kpi-card {
+    background: linear-gradient(
+        135deg,
+        #0f172a 0%,
+        #1e3a8a 100%
+    );
+    padding: 24px;
+    border-radius: 20px;
+    border-top: 5px solid #991b1b;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.10);
+    color: white;
+    margin-bottom: 10px;
+}
+
+.kpi-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #dbeafe;
+    margin-bottom: 12px;
+}
+
+.kpi-value {
+    font-size: 38px;
+    font-weight: 700;
+    color: white;
+}
+
+/* CHART */
 .stPlotlyChart {
     background: white;
-    border-radius: 18px;
-    padding: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    padding: 15px;
+    border-radius: 22px;
+    border-top: 5px solid #991b1b;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
 }
 
-section[data-testid="stSidebar"] {
-    background-color: #ffffff;
-    border-right: 1px solid #ececec;
+/* TABLE */
+[data-testid="stDataFrame"] {
+    background: white;
+    border-radius: 22px;
+    padding: 12px;
+    border-top: 5px solid #991b1b;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+
+/* BUTTON */
+.stButton>button {
+    background: #991b1b;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.stDownloadButton>button {
+    background: #0b1f4d;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-# =========================
-# TITLE
-# =========================
-st.title("📊 Quality Gate Preforming Monitoring System")
+# =====================================================
+# HEADER
+# =====================================================
 
-# =========================
+st.markdown("""
+<div class="dashboard-header">
+
+    <div class="dashboard-title">
+        QUALITY GATE MONITORING SYSTEM
+    </div>
+
+    <div class="dashboard-subtitle">
+        Internal Quality Monitoring Dashboard
+    </div>
+
+</div>
+""", unsafe_allow_html=True)
+
+# =====================================================
 # COLUMN FORMAT
-# =========================
+# =====================================================
+
 COLUMNS = [
     "No",
     "Tanggal",
@@ -92,16 +202,18 @@ DEFECT_LIST = [
     "Dimensi Lebar & Tebal"
 ]
 
-# =========================
+# =====================================================
 # SESSION STATE
-# =========================
+# =====================================================
+
 if "db" not in st.session_state:
     st.session_state["db"] = pd.DataFrame(columns=COLUMNS)
 
-# =========================
+# =====================================================
 # SIDEBAR
-# =========================
-st.sidebar.header("📁 Data Management")
+# =====================================================
+
+st.sidebar.markdown("## DATA MANAGEMENT")
 
 uploaded_file = st.sidebar.file_uploader(
     "Upload Excel",
@@ -119,11 +231,6 @@ if uploaded_file:
             for c in df_upload.columns
         ]
 
-        df_upload = df_upload.loc[
-            :,
-            ~df_upload.columns.duplicated()
-        ]
-
         for col in COLUMNS:
             if col not in df_upload.columns:
                 df_upload[col] = ""
@@ -137,15 +244,16 @@ if uploaded_file:
 
         st.session_state["db"] = df_upload
 
-        st.sidebar.success("✅ Upload berhasil")
+        st.sidebar.success("Upload berhasil")
 
     except Exception as e:
         st.sidebar.error(f"Error : {e}")
 
-# =========================
+# =====================================================
 # INPUT FORM
-# =========================
-st.sidebar.header("➕ Input Data")
+# =====================================================
+
+st.sidebar.markdown("## INPUT DATA")
 
 with st.sidebar.form("form", clear_on_submit=True):
 
@@ -179,9 +287,7 @@ with st.sidebar.form("form", clear_on_submit=True):
         DEFECT_LIST
     )
 
-    submit = st.form_submit_button(
-        "Tambah Data"
-    )
+    submit = st.form_submit_button("Tambah Data")
 
     if submit:
 
@@ -212,20 +318,22 @@ with st.sidebar.form("form", clear_on_submit=True):
 
         st.session_state["db"] = df
 
-        st.success("✅ Data berhasil ditambahkan")
+        st.success("Data berhasil ditambahkan")
 
-# =========================
+# =====================================================
 # LOAD DATA
-# =========================
+# =====================================================
+
 df = st.session_state["db"].copy()
 
 if df.empty:
     st.warning("Belum ada data")
     st.stop()
 
-# =========================
+# =====================================================
 # DATA CLEANING
-# =========================
+# =====================================================
+
 df["Tanggal"] = pd.to_datetime(
     df["Tanggal"],
     format="%d/%m/%Y",
@@ -248,33 +356,29 @@ df["is_ok"] = (
     .astype(int)
 )
 
-# =========================
+# =====================================================
 # FILTER
-# =========================
-st.subheader("🔍 Filter Data")
+# =====================================================
 
-c1,c2,c3,c4 = st.columns(4)
+st.markdown(
+    '<div class="section-title">FILTER DATA</div>',
+    unsafe_allow_html=True
+)
+
+c1, c2, c3, c4 = st.columns(4)
 
 with c1:
 
     f_shift = st.multiselect(
         "Shift",
-        sorted(
-            df["Shift"]
-            .dropna()
-            .unique()
-        )
+        sorted(df["Shift"].dropna().unique())
     )
 
 with c2:
 
     f_hp = st.multiselect(
         "No HP",
-        sorted(
-            df["No HP"]
-            .dropna()
-            .unique()
-        )
+        sorted(df["No HP"].dropna().unique())
     )
 
 with c3:
@@ -295,19 +399,13 @@ with c4:
 df_f = df.copy()
 
 if f_shift:
-    df_f = df_f[
-        df_f["Shift"].isin(f_shift)
-    ]
+    df_f = df_f[df_f["Shift"].isin(f_shift)]
 
 if f_hp:
-    df_f = df_f[
-        df_f["No HP"].isin(f_hp)
-    ]
+    df_f = df_f[df_f["No HP"].isin(f_hp)]
 
 if f_ket:
-    df_f = df_f[
-        df_f["Keterangan"].isin(f_ket)
-    ]
+    df_f = df_f[df_f["Keterangan"].isin(f_ket)]
 
 if len(f_date) == 2:
 
@@ -321,54 +419,90 @@ if len(f_date) == 2:
         )
     ]
 
-# =========================
-# KPI SCORECARD
-# =========================
+# =====================================================
+# KPI
+# =====================================================
+
 jumlah_layer_jalan = len(df_f)
 
-jumlah_layer_ok = int(
-    df_f["is_ok"].sum()
-)
+jumlah_layer_ok = int(df_f["is_ok"].sum())
 
-jumlah_layer_ng = int(
-    df_f["is_ng"].sum()
-)
+jumlah_layer_ng = int(df_f["is_ng"].sum())
 
 akurasi_ok = (
     jumlah_layer_ok /
-    (jumlah_layer_ok + jumlah_layer_ng)
-    if (jumlah_layer_ok + jumlah_layer_ng) > 0
+    jumlah_layer_jalan
+    if jumlah_layer_jalan > 0
     else 0
 )
 
-st.subheader("📌 Score Card")
-
-k1,k2,k3,k4 = st.columns(4)
-
-k1.metric(
-    "Jumlah Layer Jalan",
-    f"{jumlah_layer_jalan}"
+st.markdown(
+    '<div class="section-title">PERFORMANCE OVERVIEW</div>',
+    unsafe_allow_html=True
 )
 
-k2.metric(
-    "Jumlah Layer OK",
-    f"{jumlah_layer_ok}"
-)
+k1, k2, k3, k4 = st.columns(4)
 
-k3.metric(
-    "Jumlah Layer NG",
-    f"{jumlah_layer_ng}"
-)
+with k1:
+    st.markdown(f"""
+    <div class="kpi-card">
+        <div class="kpi-title">
+            JUMLAH LAYER JALAN
+        </div>
 
-k4.metric(
-    "Akurasi OK",
-    f"{akurasi_ok:.2%}"
-)
+        <div class="kpi-value">
+            {jumlah_layer_jalan}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-# =========================
+with k2:
+    st.markdown(f"""
+    <div class="kpi-card">
+        <div class="kpi-title">
+            JUMLAH LAYER OK
+        </div>
+
+        <div class="kpi-value">
+            {jumlah_layer_ok}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with k3:
+    st.markdown(f"""
+    <div class="kpi-card">
+        <div class="kpi-title">
+            JUMLAH LAYER NG
+        </div>
+
+        <div class="kpi-value">
+            {jumlah_layer_ng}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with k4:
+    st.markdown(f"""
+    <div class="kpi-card">
+        <div class="kpi-title">
+            AKURASI OK
+        </div>
+
+        <div class="kpi-value">
+            {akurasi_ok:.2%}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# =====================================================
 # COMBO CHART
-# =========================
-st.subheader("📈 Monitoring Harian")
+# =====================================================
+
+st.markdown(
+    '<div class="section-title">MONITORING HARIAN</div>',
+    unsafe_allow_html=True
+)
 
 daily = (
     df_f.groupby("Tanggal")
@@ -395,31 +529,29 @@ fig_combo = make_subplots(
 )
 
 fig_combo.add_trace(
-
     go.Bar(
         x=daily["Tanggal"],
         y=daily["Layer Jalan"],
-        name="Jumlah Layer Jalan"
+        name="Jumlah Layer Jalan",
+        marker_color="#1e3a8a"
     ),
-
     secondary_y=False
 )
 
 fig_combo.add_trace(
-
     go.Scatter(
         x=daily["Tanggal"],
         y=daily["Akurasi"],
         mode="lines+markers",
-        name="Akurasi OK"
+        name="Akurasi OK",
+        line=dict(color="#991b1b", width=4)
     ),
-
     secondary_y=True
 )
 
 fig_combo.update_layout(
-    height=450,
     template="plotly_white",
+    height=500,
     hovermode="x unified"
 )
 
@@ -439,14 +571,18 @@ st.plotly_chart(
     width="stretch"
 )
 
-# =========================
-# TOP TABLES
-# =========================
-t1,t2 = st.columns(2)
+# =====================================================
+# TOP TABLE
+# =====================================================
+
+t1, t2 = st.columns(2)
 
 with t1:
 
-    st.subheader("⚠️ 5 Mesin Hotpress Paling Bermasalah")
+    st.markdown(
+        '<div class="section-title">TOP 5 MESIN HOTPRESS BERMASALAH</div>',
+        unsafe_allow_html=True
+    )
 
     top_hp = (
         df_f.groupby("No HP")["is_ng"]
@@ -463,11 +599,6 @@ with t1:
         .head(5)
     )
 
-    top_hp.index = range(
-        1,
-        len(top_hp)+1
-    )
-
     st.dataframe(
         top_hp,
         width="stretch",
@@ -476,7 +607,10 @@ with t1:
 
 with t2:
 
-    st.subheader("⚠️ 5 Molding Paling Bermasalah")
+    st.markdown(
+        '<div class="section-title">TOP 5 MOLDING BERMASALAH</div>',
+        unsafe_allow_html=True
+    )
 
     top_mold = (
         df_f.groupby("Kode Mold")["is_ng"]
@@ -493,23 +627,22 @@ with t2:
         .head(5)
     )
 
-    top_mold.index = range(
-        1,
-        len(top_mold)+1
-    )
-
     st.dataframe(
         top_mold,
         width="stretch",
         height=250
     )
 
-# =========================
-# ANALYSIS CHART
-# =========================
-st.subheader("📊 Analisis Data")
+# =====================================================
+# ANALYSIS
+# =====================================================
 
-g1,g2 = st.columns(2)
+st.markdown(
+    '<div class="section-title">ANALISIS DATA</div>',
+    unsafe_allow_html=True
+)
+
+g1, g2 = st.columns(2)
 
 with g1:
 
@@ -529,7 +662,7 @@ with g1:
 
     fig1.update_layout(
         template="plotly_white",
-        height=420
+        height=450
     )
 
     st.plotly_chart(
@@ -555,13 +688,12 @@ with g2:
         cacat,
         names="Jenis Defect",
         values="Jumlah",
-        title="Distribusi Jenis Defect",
-        hole=0.45
+        hole=0.5
     )
 
     fig2.update_layout(
         template="plotly_white",
-        height=420
+        height=450
     )
 
     st.plotly_chart(
@@ -569,10 +701,14 @@ with g2:
         width="stretch"
     )
 
-# =========================
+# =====================================================
 # TABLE DATA
-# =========================
-st.subheader("📋 Tabel Data")
+# =====================================================
+
+st.markdown(
+    '<div class="section-title">TABEL DATA</div>',
+    unsafe_allow_html=True
+)
 
 df_show = df_f.copy()
 
@@ -587,10 +723,14 @@ st.dataframe(
     height=450
 )
 
-# =========================
+# =====================================================
 # DELETE DATA
-# =========================
-st.subheader("🗑️ Hapus Data")
+# =====================================================
+
+st.markdown(
+    '<div class="section-title">HAPUS DATA</div>',
+    unsafe_allow_html=True
+)
 
 hapus = st.number_input(
     "Masukkan Nomor Data",
@@ -613,12 +753,16 @@ if st.button("Hapus"):
 
     st.session_state["db"] = df
 
-    st.success("✅ Data berhasil dihapus")
+    st.success("Data berhasil dihapus")
 
-# =========================
-# DOWNLOAD EXCEL
-# =========================
-st.subheader("⬇️ Download Data")
+# =====================================================
+# DOWNLOAD
+# =====================================================
+
+st.markdown(
+    '<div class="section-title">DOWNLOAD DATA</div>',
+    unsafe_allow_html=True
+)
 
 def convert_excel(data):
 
@@ -646,7 +790,7 @@ def convert_excel(data):
     return output.getvalue()
 
 st.download_button(
-    label="📥 Download Excel",
+    label="Download Excel",
     data=convert_excel(df),
     file_name="quality_gate.xlsx"
 )
