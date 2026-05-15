@@ -904,21 +904,7 @@ st.markdown(
 )
 
 # =====================================================
-# DATA TOP 10 MOLD DEFECT
-# =====================================================
-# =====================================================
-# VISUALISASI DEFECT MOLDING
-# =====================================================
-
-from streamlit_plotly_events import plotly_events
-
-st.markdown(
-    '<div class="section-title">VISUALISASI DEFECT MOLDING</div>',
-    unsafe_allow_html=True
-)
-
-# =====================================================
-# DATA MOLD
+# DATA TOP MOLD
 # =====================================================
 
 mold_chart = (
@@ -926,19 +912,24 @@ mold_chart = (
     .sum()
     .reset_index()
     .rename(columns={
-        "is_ng":"Jumlah Defect"
+        "is_ng": "Jumlah Defect"
     })
+)
+
+# HAPUS MOLD KOSONG
+mold_chart = mold_chart[
+    mold_chart["Kode Mold"].astype(str).str.strip() != ""
+]
+
+# AMBIL TOP 10
+mold_chart = (
+    mold_chart
     .sort_values(
         by="Jumlah Defect",
         ascending=False
     )
     .head(10)
 )
-
-# HAPUS DATA KOSONG
-mold_chart = mold_chart[
-    mold_chart["Kode Mold"].astype(str).str.strip() != ""
-]
 
 # =====================================================
 # BAR CHART VERTIKAL
@@ -949,6 +940,7 @@ fig_mold = go.Figure()
 fig_mold.add_trace(
 
     go.Bar(
+
         x=mold_chart["Kode Mold"],
         y=mold_chart["Jumlah Defect"],
 
@@ -958,7 +950,7 @@ fig_mold.add_trace(
         marker=dict(
             color="#8B0000",
             line=dict(
-                color="#600000",
+                color="#5c0000",
                 width=1
             )
         ),
@@ -972,8 +964,8 @@ fig_mold.add_trace(
 fig_mold.update_layout(
 
     title={
-        "text":"Top 10 Defect Molding",
-        "x":0.5
+        "text": "Top 10 Defect Molding",
+        "x": 0.5
     },
 
     template="plotly_white",
@@ -1004,7 +996,7 @@ fig_mold.update_layout(
 )
 
 # =====================================================
-# CLICK EVENT
+# EVENT CLICK
 # =====================================================
 
 selected_points = plotly_events(
@@ -1012,18 +1004,11 @@ selected_points = plotly_events(
     click_event=True,
     hover_event=False,
     select_event=False,
-    override_height=520,
     key="mold_chart"
 )
 
-# TAMPILKAN CHART
-st.plotly_chart(
-    fig_mold,
-    width="stretch"
-)
-
 # =====================================================
-# DETAIL MOLD
+# TAMPILKAN DETAIL
 # =====================================================
 
 if selected_points:
@@ -1031,24 +1016,6 @@ if selected_points:
     selected_index = selected_points[0]["pointIndex"]
 
     selected_mold = mold_chart.iloc[selected_index]["Kode Mold"]
-
-    st.markdown("---")
-
-    st.markdown(f"""
-    <div style="
-        background:white;
-        padding:22px;
-        border-radius:18px;
-        border-left:8px solid #8B0000;
-        box-shadow:0 4px 12px rgba(0,0,0,0.08);
-        margin-top:10px;
-        margin-bottom:20px;
-    ">
-        <h3 style="margin-bottom:0;color:#081F5C;">
-            DETAIL MOLD : {selected_mold}
-        </h3>
-    </div>
-    """, unsafe_allow_html=True)
 
     detail_df = df_f[
         df_f["Kode Mold"] == selected_mold
@@ -1059,8 +1026,33 @@ if selected_points:
         .dt.strftime("%d/%m/%Y")
     )
 
+    st.markdown("<br>", unsafe_allow_html=True)
+
     # =====================================================
-    # REKAP PER TANGGAL DAN DEFECT
+    # HEADER DETAIL
+    # =====================================================
+
+    st.markdown(f"""
+    <div style="
+        background:white;
+        padding:20px;
+        border-radius:18px;
+        border-left:8px solid #8B0000;
+        box-shadow:0 4px 12px rgba(0,0,0,0.08);
+        margin-bottom:20px;
+    ">
+        <h2 style="
+            margin:0;
+            color:#081F5C;
+            font-weight:800;
+        ">
+            DETAIL MOLD : {selected_mold}
+        </h2>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # =====================================================
+    # REKAP
     # =====================================================
 
     rekap = (
@@ -1071,9 +1063,13 @@ if selected_points:
         .reset_index(name="Jumlah")
     )
 
-    tanggal_unik = rekap["Tanggal"].unique()
+    tanggal_list = (
+        rekap["Tanggal"]
+        .drop_duplicates()
+        .tolist()
+    )
 
-    for tgl in tanggal_unik:
+    for tgl in tanggal_list:
 
         sub = rekap[
             rekap["Tanggal"] == tgl
@@ -1081,45 +1077,96 @@ if selected_points:
 
         total_tgl = sub["Jumlah"].sum()
 
-        st.markdown(f"""
-        <div style="
-            background:#f8f9fc;
-            padding:18px;
-            border-radius:14px;
-            margin-bottom:14px;
-            border:1px solid #e3e6ef;
-        ">
-            <h4 style="
-                color:#8B0000;
-                margin-bottom:10px;
-            ">
-                📅 {tgl}
-            </h4>
-
-            <p style="
-                font-size:16px;
-                margin-bottom:8px;
-            ">
-                Total Penggunaan :
-                <b>{total_tgl} pcs</b>
-            </p>
-        """, unsafe_allow_html=True)
-
-        for _, row in sub.iterrows():
+        with st.container():
 
             st.markdown(f"""
             <div style="
-                margin-left:10px;
-                margin-bottom:6px;
+                background:white;
+                padding:18px;
+                border-radius:16px;
+                margin-bottom:15px;
+                border:1px solid #e5e7eb;
+                box-shadow:0 2px 8px rgba(0,0,0,0.05);
+            ">
+            """, unsafe_allow_html=True)
+
+            col1, col2 = st.columns([3,1])
+
+            with col1:
+                st.markdown(f"""
+                <div style="
+                    font-size:22px;
+                    font-weight:800;
+                    color:#8B0000;
+                    margin-bottom:8px;
+                ">
+                    📅 {tgl}
+                </div>
+                """, unsafe_allow_html=True)
+
+            with col2:
+                st.markdown(f"""
+                <div style="
+                    background:#081F5C;
+                    color:white;
+                    padding:10px;
+                    border-radius:12px;
+                    text-align:center;
+                    font-weight:700;
+                    font-size:15px;
+                ">
+                    {total_tgl} pcs
+                </div>
+                """, unsafe_allow_html=True)
+
+            st.markdown("""
+            <div style="
+                margin-top:12px;
+                margin-bottom:10px;
+                font-weight:700;
+                color:#444;
                 font-size:15px;
             ">
-                • {row['Keterangan']} :
-                <b>{row['Jumlah']} pcs</b>
+                Detail Defect
             </div>
             """, unsafe_allow_html=True)
 
-        st.markdown("</div>", unsafe_allow_html=True)
-        
+            for _, row in sub.iterrows():
+
+                st.markdown(f"""
+                <div style="
+                    background:#f8fafc;
+                    padding:12px 16px;
+                    border-radius:12px;
+                    margin-bottom:8px;
+                    border-left:5px solid #8B0000;
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                ">
+                    <span style="
+                        font-size:15px;
+                        color:#222;
+                        font-weight:600;
+                    ">
+                        {row['Keterangan']}
+                    </span>
+
+                    <span style="
+                        background:#8B0000;
+                        color:white;
+                        padding:5px 12px;
+                        border-radius:999px;
+                        font-size:14px;
+                        font-weight:700;
+                    ">
+                        {row['Jumlah']} pcs
+                    </span>
+                </div>
+                """, unsafe_allow_html=True)
+
+            st.markdown("</div>", unsafe_allow_html=True)
+            
 # =====================================================
 # TABEL KATEGORI
 # =====================================================
