@@ -896,10 +896,15 @@ with g2:
 # =====================================================
 # VISUALISASI DEFECT MOLDING
 # =====================================================
+
 st.markdown(
     '<div class="section-title">VISUALISASI DEFECT MOLDING</div>',
     unsafe_allow_html=True
 )
+
+# =====================================================
+# DATA TOP 10 MOLD DEFECT
+# =====================================================
 
 mold_chart = (
     df_f.groupby("Kode Mold")["is_ng"]
@@ -915,6 +920,60 @@ mold_chart = (
     .head(10)
 )
 
+# =====================================================
+# MEMBUAT DETAIL TOOLTIP
+# =====================================================
+
+detail_hover = []
+
+for mold in mold_chart["Kode Mold"]:
+
+    detail_df = df_f[
+        (df_f["Kode Mold"] == mold)
+        &
+        (df_f["is_ng"] == 1)
+    ].copy()
+
+    detail_df["Tanggal"] = (
+        detail_df["Tanggal"]
+        .dt.strftime("%d/%m/%Y")
+    )
+
+    teks = f"<b>{mold}</b><br><br>"
+
+    tanggal_group = (
+        detail_df.groupby("Tanggal")
+    )
+
+    for tanggal, data_tgl in tanggal_group:
+
+        total = len(data_tgl)
+
+        teks += (
+            f"<b>{tanggal}</b> = "
+            f"{total} pcs<br>"
+        )
+
+        defect_count = (
+            data_tgl["Keterangan"]
+            .value_counts()
+        )
+
+        for defect, qty in defect_count.items():
+
+            teks += (
+                f"• {defect} : "
+                f"{qty} pcs<br>"
+            )
+
+        teks += "<br>"
+
+    detail_hover.append(teks)
+
+# =====================================================
+# BAR CHART
+# =====================================================
+
 fig_mold = go.Figure()
 
 fig_mold.add_trace(
@@ -922,16 +981,36 @@ fig_mold.add_trace(
     go.Bar(
         x=mold_chart["Kode Mold"],
         y=mold_chart["Jumlah Defect"],
+
         text=mold_chart["Jumlah Defect"],
+
         textposition="outside",
+
         textfont=dict(
             color="black",
             size=12
         ),
-        marker_color="#8B0000",
+
+        marker=dict(
+            color="#8B0000",
+            line=dict(
+                color="#5A0000",
+                width=1.5
+            )
+        ),
+
+        hovertemplate=
+        "%{customdata}<extra></extra>",
+
+        customdata=detail_hover,
+
         name="Jumlah Defect"
     )
 )
+
+# =====================================================
+# LAYOUT
+# =====================================================
 
 fig_mold.update_layout(
 
@@ -942,13 +1021,21 @@ fig_mold.update_layout(
 
     template="plotly_white",
 
-    height=500,
+    height=550,
 
     plot_bgcolor="white",
     paper_bgcolor="white",
 
     xaxis_title="Kode Mold",
     yaxis_title="Jumlah Defect",
+
+    hoverlabel=dict(
+        bgcolor="white",
+        font_size=13,
+        font_family="Segoe UI",
+        font_color="black",
+        bordercolor="#d9d9d9"
+    ),
 
     font=dict(
         color="black"
