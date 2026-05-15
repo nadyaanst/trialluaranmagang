@@ -1,6 +1,3 @@
-# =====================================================
-# IMPORT LIBRARY
-# =====================================================
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -172,12 +169,30 @@ BUTTON
     height: 45px;
 }
 
+/* =========================
+SUCCESS BOX
+========================= */
+.stSuccess {
+    border-radius: 12px;
+}
+
+/* =========================
+INPUT FORM BOX
+========================= */
+[data-testid="stForm"] {
+    background: rgba(255,255,255,0.05);
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
 </style>
 """, unsafe_allow_html=True)
 
 # =====================================================
 # HEADER
 # =====================================================
+
 st.markdown("""
 <div class="dashboard-container">
     <div class="dashboard-title">
@@ -187,7 +202,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =====================================================
-# COLUMN
+# COLUMN FORMAT
 # =====================================================
 COLUMNS = [
     "No",
@@ -353,21 +368,9 @@ df["Tanggal"] = pd.to_datetime(
     errors="coerce"
 )
 
-df["Kode Mold"] = (
-    df["Kode Mold"]
-    .astype(str)
-    .str.strip()
-    .str.upper()
-)
-
-df["Keterangan"] = (
-    df["Keterangan"]
-    .astype(str)
-    .str.strip()
-)
-
 df["is_ng"] = (
     df["Keterangan"]
+    .astype(str)
     .str.upper()
     .ne("OK")
     .astype(int)
@@ -375,6 +378,7 @@ df["is_ng"] = (
 
 df["is_ok"] = (
     df["Keterangan"]
+    .astype(str)
     .str.upper()
     .eq("OK")
     .astype(int)
@@ -391,24 +395,36 @@ st.markdown(
 c1,c2,c3,c4 = st.columns(4)
 
 with c1:
+
     f_shift = st.multiselect(
         "Shift",
-        sorted(df["Shift"].dropna().unique())
+        sorted(
+            df["Shift"]
+            .dropna()
+            .unique()
+        )
     )
 
 with c2:
+
     f_hp = st.multiselect(
         "No HP",
-        sorted(df["No HP"].dropna().unique())
+        sorted(
+            df["No HP"]
+            .dropna()
+            .unique()
+        )
     )
 
 with c3:
+
     f_ket = st.multiselect(
         "Keterangan",
         DEFECT_LIST
     )
 
 with c4:
+
     f_date = st.date_input(
         "Tanggal Range",
         [],
@@ -418,13 +434,19 @@ with c4:
 df_f = df.copy()
 
 if f_shift:
-    df_f = df_f[df_f["Shift"].isin(f_shift)]
+    df_f = df_f[
+        df_f["Shift"].isin(f_shift)
+    ]
 
 if f_hp:
-    df_f = df_f[df_f["No HP"].isin(f_hp)]
+    df_f = df_f[
+        df_f["No HP"].isin(f_hp)
+    ]
 
 if f_ket:
-    df_f = df_f[df_f["Keterangan"].isin(f_ket)]
+    df_f = df_f[
+        df_f["Keterangan"].isin(f_ket)
+    ]
 
 if len(f_date) == 2:
 
@@ -443,9 +465,13 @@ if len(f_date) == 2:
 # =====================================================
 jumlah_layer_jalan = len(df_f)
 
-jumlah_layer_ok = int(df_f["is_ok"].sum())
+jumlah_layer_ok = int(
+    df_f["is_ok"].sum()
+)
 
-jumlah_layer_ng = int(df_f["is_ng"].sum())
+jumlah_layer_ng = int(
+    df_f["is_ng"].sum()
+)
 
 persentase_ok = (
     jumlah_layer_ok /
@@ -489,6 +515,386 @@ with k4:
     """, unsafe_allow_html=True)
 
 # =====================================================
+# COMBO CHART
+# =====================================================
+
+st.markdown(
+    '<div class="section-title">MONITORING HARIAN</div>',
+    unsafe_allow_html=True
+)
+
+daily = (
+    df_f.groupby("Tanggal")
+    .agg({
+        "Layer HP":"count",
+        "is_ok":"sum"
+    })
+    .reset_index()
+    .sort_values("Tanggal")
+)
+
+daily.columns = [
+    "Tanggal",
+    "Layer Jalan",
+    "Layer OK"
+]
+
+daily["Persentase OK"] = (
+    daily["Layer OK"] /
+    daily["Layer Jalan"]
+)
+
+daily["Target"] = 1
+
+fig_combo = make_subplots(
+    specs=[[{"secondary_y": True}]]
+)
+
+# =====================================================
+# BAR TOTAL LAYER JALAN
+# =====================================================
+fig_combo.add_trace(
+
+    go.Bar(
+        x=daily["Tanggal"],
+        y=daily["Layer Jalan"],
+        name="Total Layer Jalan",
+        marker_color="#8B0000"
+    ),
+
+    secondary_y=False
+)
+
+# =====================================================
+# BAR TOTAL LAYER OK
+# =====================================================
+fig_combo.add_trace(
+
+    go.Bar(
+        x=daily["Tanggal"],
+        y=daily["Layer OK"],
+        name="Total Layer OK",
+        marker_color="#081F5C"
+    ),
+
+    secondary_y=False
+)
+
+# =====================================================
+# LINE PERSENTASE OK
+# =====================================================
+fig_combo.add_trace(
+
+    go.Scatter(
+
+        x=daily["Tanggal"],
+        y=daily["Persentase OK"],
+
+        mode="lines+markers",
+
+        name="Persentase OK",
+
+        line=dict(
+            color="#FF6B00",
+            width=4
+        ),
+
+        marker=dict(
+            size=10,
+            color="#FF6B00"
+        ),
+
+        hovertemplate=
+        "<b>Tanggal:</b> %{x|%d-%m-%Y}<br>" +
+        "<b>Persentase OK:</b> %{y:.1%}<extra></extra>"
+
+    ),
+
+    secondary_y=True
+)
+
+# =====================================================
+# TARGET 100%
+# =====================================================
+fig_combo.add_trace(
+
+    go.Scatter(
+        x=daily["Tanggal"],
+        y=daily["Target"],
+        mode="lines",
+
+        name="Target 100%",
+
+        line=dict(
+            color="#00C853",
+            width=3,
+            dash="dash"
+        )
+    ),
+
+    secondary_y=True
+)
+
+# =====================================================
+# LAYOUT
+# =====================================================
+fig_combo.update_layout(
+
+    height=560,
+
+    template="plotly_white",
+
+    hovermode="x unified",
+
+    barmode="group",
+
+    plot_bgcolor="white",
+    paper_bgcolor="white",
+
+    font=dict(
+        family="Segoe UI",
+        size=13,
+        color="black"
+    ),
+
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1.02,
+        xanchor="center",
+        x=0.5,
+        font=dict(color="black")
+    ),
+
+    xaxis=dict(
+
+        type="date",
+
+        tickformat="%d %b\n%Y",
+
+        dtick="D1",
+
+        tickangle=0,
+
+        showgrid=False,
+
+        tickfont=dict(
+            color="black",
+            size=12
+        ),
+
+        title_font=dict(
+            color="black"
+        ),
+
+        rangeslider=dict(
+            visible=True,
+            thickness=0.08
+        ),
+
+        range=[
+            daily["Tanggal"].min(),
+            daily["Tanggal"].min() + pd.Timedelta(days=5)
+        ]
+    )
+)
+
+# BACKGROUND PUTIH UNTUK LABEL PERSENTASE
+for i, row in daily.iterrows():
+
+    fig_combo.add_annotation(
+
+        x=row["Tanggal"],
+        y=row["Persentase OK"],
+
+        text=f"<b>{row['Persentase OK']:.1%}</b>",
+
+        showarrow=False,
+
+        yshift=18,
+
+        font=dict(
+            color="black",
+            size=12
+        ),
+
+        bgcolor="white",
+
+        bordercolor="#d9d9d9",
+
+        borderwidth=1,
+
+        borderpad=4,
+
+        opacity=0.95
+    )
+
+# =====================================================
+# Y AXIS KIRI
+# =====================================================
+fig_combo.update_yaxes(
+
+    title_text="Jumlah Layer",
+
+    secondary_y=False,
+
+    title_font=dict(
+        color="black"
+    ),
+
+    tickfont=dict(
+        color="black"
+    ),
+
+    gridcolor="rgba(0,0,0,0.08)"
+)
+
+# =====================================================
+# Y AXIS KANAN
+# =====================================================
+fig_combo.update_yaxes(
+
+    title_text="Persentase OK",
+
+    tickformat=".0%",
+
+    range=[0,1.1],
+
+    secondary_y=True,
+
+    title_font=dict(
+        color="black"
+    ),
+
+    tickfont=dict(
+        color="black"
+    )
+)
+
+st.plotly_chart(
+    fig_combo,
+    width="stretch"
+)
+
+# =====================================================
+# ANALISIS DATA
+# =====================================================
+st.markdown(
+    '<div class="section-title">ANALISIS DATA</div>',
+    unsafe_allow_html=True
+)
+
+g1,g2 = st.columns(2)
+
+# =====================================================
+# GRAFIK MESIN
+# =====================================================
+with g1:
+
+    mesin = (
+        df_f.groupby("No HP")["is_ng"]
+        .sum()
+        .reset_index()
+        .rename(columns={
+            "is_ng":"Jumlah Defect"
+        })
+    )
+
+    fig1 = px.bar(
+        mesin,
+        x="No HP",
+        y="Jumlah Defect",
+        text="Jumlah Defect"
+    )
+
+    fig1.update_traces(
+        marker_color="#0B1F4D",
+        textposition="outside",
+        textfont=dict(
+            color="black",
+            size=12
+        )
+    )
+
+    fig1.update_layout(
+        title="Jumlah Defect per Mesin",
+        template="plotly_white",
+        height=420,
+        xaxis_title="No HP",
+        yaxis_title="Jumlah Defect",
+
+        font=dict(
+            color="black"
+        ),
+
+        xaxis=dict(
+            title_font=dict(color="black"),
+            tickfont=dict(color="black")
+        ),
+
+        yaxis=dict(
+            title_font=dict(color="black"),
+            tickfont=dict(color="black")
+        )
+    )
+
+    st.plotly_chart(
+        fig1,
+        width="stretch"
+    )
+
+# =====================================================
+# PIE CHART
+# =====================================================
+with g2:
+
+    cacat = (
+        df_f[df_f["is_ng"] == 1]
+        ["Keterangan"]
+        .value_counts()
+        .reset_index()
+    )
+
+    cacat.columns = [
+        "Jenis Defect",
+        "Jumlah"
+    ]
+
+    fig2 = px.pie(
+        cacat,
+        names="Jenis Defect",
+        values="Jumlah",
+        hole=0.45
+    )
+
+    fig2.update_traces(
+        textfont=dict(
+            color="black",
+            size=12
+        ),
+        textinfo="percent+label"
+    )
+
+    fig2.update_layout(
+        title="Distribusi Jenis Defect",
+        template="plotly_white",
+        height=420,
+
+        font=dict(
+            color="black"
+        ),
+
+        legend=dict(
+            font=dict(color="black")
+        )
+    )
+
+    st.plotly_chart(
+        fig2,
+        width="stretch"
+    )
+
+# =====================================================
 # VISUALISASI DEFECT MOLDING
 # =====================================================
 st.markdown(
@@ -497,7 +903,7 @@ st.markdown(
 )
 
 # =====================================================
-# DATA KHUSUS DEFECT
+# DATA MOLD
 # =====================================================
 
 mold_chart = (
@@ -507,19 +913,34 @@ mold_chart = (
     .reset_index(name="Jumlah Defect")
 )
 
-# HAPUS KOSONG
+# =====================================================
+# BERSIHKAN DATA
+# =====================================================
+
+mold_chart["Kode Mold"] = (
+    mold_chart["Kode Mold"]
+    .astype(str)
+    .str.strip()
+    .str.upper()
+)
+
 mold_chart = mold_chart[
     mold_chart["Kode Mold"] != ""
 ]
 
-# SORTING
-mold_chart = mold_chart.sort_values(
-    by="Jumlah Defect",
-    ascending=False
-).head(10)
+# =====================================================
+# SORTING TOP 10
+# =====================================================
 
-# RESET INDEX
-mold_chart = mold_chart.reset_index(drop=True)
+mold_chart = (
+    mold_chart
+    .sort_values(
+        by="Jumlah Defect",
+        ascending=False
+    )
+    .head(10)
+    .reset_index(drop=True)
+)
 
 # =====================================================
 # VERTICAL BAR CHART
@@ -545,8 +966,6 @@ fig_mold.add_trace(
             )
         ),
 
-        width=0.6,
-
         hovertemplate=
         "<b>Kode Mold :</b> %{x}<br>" +
         "<b>Jumlah Defect :</b> %{y}<extra></extra>"
@@ -555,25 +974,24 @@ fig_mold.add_trace(
 
 fig_mold.update_layout(
 
-    template="plotly_white",
-
-    height=550,
-
-    title=dict(
-        text="TOP 10 DEFECT MOLDING",
-        x=0.5,
-        font=dict(
-            size=24,
+    title={
+        "text": "TOP 10 DEFECT MOLDING",
+        "x": 0.5,
+        "font": dict(
+            size=22,
             color="#081F5C"
         )
-    ),
+    },
+
+    template="plotly_white",
+
+    height=600,
 
     plot_bgcolor="white",
     paper_bgcolor="white",
 
     font=dict(
         family="Segoe UI",
-        size=13,
         color="black"
     ),
 
@@ -586,19 +1004,22 @@ fig_mold.update_layout(
 
     xaxis=dict(
         title="Kode Mold",
-        tickangle=-35,
-        showgrid=False,
-        categoryorder="total descending"
+        title_font=dict(size=15),
+        tickfont=dict(size=12),
+        tickangle=-20,
+        showgrid=False
     ),
 
     yaxis=dict(
         title="Jumlah Defect",
+        title_font=dict(size=15),
+        tickfont=dict(size=12),
         gridcolor="rgba(0,0,0,0.08)"
     )
 )
 
 # =====================================================
-# SHOW CHART
+# TAMPILKAN CHART
 # =====================================================
 
 selected_points = plotly_events(
@@ -606,28 +1027,26 @@ selected_points = plotly_events(
     click_event=True,
     hover_event=False,
     select_event=False,
-    override_height=550,
+    override_height=600,
     key="mold_chart"
 )
 
 # =====================================================
-# DETAIL KETIKA BAR DIKLIK
+# DETAIL SETELAH DIKLIK
 # =====================================================
 
 if selected_points:
 
-    # =====================================================
-    # AMBIL KODE MOLD LANGSUNG DARI X
-    # =====================================================
-
+    # AMBIL NAMA MOLD LANGSUNG DARI X
     selected_mold = selected_points[0]["x"]
 
-    # =====================================================
-    # FILTER DETAIL SESUAI MOLD
-    # =====================================================
-
+    # FILTER SESUAI MOLD
     detail_df = df_f[
-        df_f["Kode Mold"] == selected_mold
+        df_f["Kode Mold"]
+        .astype(str)
+        .str.strip()
+        .str.upper()
+        == selected_mold
     ].copy()
 
     detail_df["Tanggal"] = (
@@ -635,8 +1054,10 @@ if selected_points:
         .dt.strftime("%d/%m/%Y")
     )
 
+    st.markdown("")
+
     # =====================================================
-    # HEADER
+    # HEADER DETAIL
     # =====================================================
 
     st.markdown(f"""
@@ -646,7 +1067,7 @@ if selected_points:
         border-radius:18px;
         border-left:8px solid #8B0000;
         box-shadow:0 4px 12px rgba(0,0,0,0.08);
-        margin-top:25px;
+        margin-top:20px;
         margin-bottom:20px;
     ">
         <div style="
@@ -665,9 +1086,13 @@ if selected_points:
 
     total_data = len(detail_df)
 
-    total_ok = int(detail_df["is_ok"].sum())
+    total_ok = int(
+        detail_df["is_ok"].sum()
+    )
 
-    total_ng = int(detail_df["is_ng"].sum())
+    total_ng = int(
+        detail_df["is_ng"].sum()
+    )
 
     d1,d2,d3 = st.columns(3)
 
@@ -695,11 +1120,11 @@ if selected_points:
         </div>
         """, unsafe_allow_html=True)
 
-    # =====================================================
-    # REKAP PER TANGGAL
-    # =====================================================
+    st.markdown("")
 
-    st.markdown("## REKAP DEFECT")
+    # =====================================================
+    # REKAP DEFECT
+    # =====================================================
 
     rekap = (
         detail_df.groupby(
@@ -709,9 +1134,7 @@ if selected_points:
         .reset_index(name="Jumlah PCS")
     )
 
-    tanggal_unik = rekap["Tanggal"].unique()
-
-    for tgl in tanggal_unik:
+    for tgl in rekap["Tanggal"].unique():
 
         sub = rekap[
             rekap["Tanggal"] == tgl
@@ -721,17 +1144,17 @@ if selected_points:
 
         st.dataframe(
             sub.rename(columns={
-                "Keterangan":"Jenis Defect"
+                "Keterangan": "Jenis Defect"
             }),
             width="stretch",
             hide_index=True
         )
 
     # =====================================================
-    # DETAIL DATA
+    # DETAIL DATA ASLI
     # =====================================================
 
-    st.markdown("## DETAIL DATA")
+    st.markdown("### DETAIL DATA")
 
     st.dataframe(
         detail_df[
@@ -748,6 +1171,102 @@ if selected_points:
         height=350,
         hide_index=True
     )
+
+# =====================================================
+# TABEL KATEGORI
+# =====================================================
+st.markdown(
+    '<div class="section-title">JUMLAH DEFECT BERDASARKAN KATEGORI</div>',
+    unsafe_allow_html=True
+)
+
+kategori_order = [
+    "Dimensi",
+    "Visual",
+    "Visual Dimensi",
+    "OK",
+    "Dimensi Panjang",
+    "Dimensi Lebar",
+    "Dimensi Tebal",
+    "Dimensi Panjang & Lebar",
+    "Dimensi Panjang & Tebal",
+    "Dimensi Lebar & Tebal"
+]
+
+kategori_df = (
+    df_f["Keterangan"]
+    .value_counts()
+    .reindex(kategori_order, fill_value=0)
+    .reset_index()
+)
+
+kategori_df.columns = [
+    "Kategori Defect",
+    "Jumlah"
+]
+
+kategori_df.index = range(
+    1,
+    len(kategori_df)+1
+)
+
+st.dataframe(
+    kategori_df,
+    width="stretch",
+    height=420
+)
+
+# =====================================================
+# TABLE DATA
+# =====================================================
+st.markdown(
+    '<div class="section-title">TABEL DATA</div>',
+    unsafe_allow_html=True
+)
+
+df_show = df_f.copy()
+
+df_show["Tanggal"] = (
+    df_show["Tanggal"]
+    .dt.strftime("%d/%m/%Y")
+)
+
+st.dataframe(
+    df_show[COLUMNS],
+    width="stretch",
+    height=450
+)
+
+# =====================================================
+# DELETE DATA
+# =====================================================
+st.markdown(
+    '<div class="section-title">HAPUS DATA</div>',
+    unsafe_allow_html=True
+)
+
+hapus = st.number_input(
+    "Masukkan Nomor Data",
+    min_value=1,
+    step=1
+)
+
+if st.button("Hapus"):
+
+    df = st.session_state["db"]
+
+    df = df[
+        df["No"] != hapus
+    ]
+
+    df["No"] = range(
+        1,
+        len(df)+1
+    )
+
+    st.session_state["db"] = df
+
+    st.success("Data berhasil dihapus")
 
 # =====================================================
 # DOWNLOAD
