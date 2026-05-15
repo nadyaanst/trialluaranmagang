@@ -585,24 +585,31 @@ fig_combo.add_trace(
 fig_combo.add_trace(
 
     go.Scatter(
-    x=daily["Tanggal"],
-    y=daily["Persentase OK"],
-    mode="lines+markers",
-    name="Persentase OK",
 
-    line=dict(
-        color="#FF6B00",
-        width=4
+        x=daily["Tanggal"],
+        y=daily["Persentase OK"],
+
+        mode="lines+markers",
+
+        name="Persentase OK",
+
+        line=dict(
+            color="#FF6B00",
+            width=4
+        ),
+
+        marker=dict(
+            size=10,
+            color="#FF6B00"
+        ),
+
+        hovertemplate=
+        "<b>Tanggal:</b> %{x|%d-%m-%Y}<br>" +
+        "<b>Persentase OK:</b> %{y:.1%}<extra></extra>"
+
     ),
 
-    marker=dict(
-        size=10,
-        color="#FF6B00"
-    ),
-
-    hovertemplate=
-    "<b>Tanggal:</b> %{x|%d-%m-%Y}<br>" +
-    "<b>Persentase OK:</b> %{y:.1%}<extra></extra>"
+    secondary_y=True
 )
 
 # =====================================================
