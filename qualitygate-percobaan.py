@@ -897,6 +897,10 @@ with g2:
 # =====================================================
 # VISUALISASI DEFECT MOLDING
 # =====================================================
+# =====================================================
+# VISUALISASI DEFECT MOLDING
+# =====================================================
+
 st.markdown(
     '<div class="section-title">VISUALISASI DEFECT MOLDING</div>',
     unsafe_allow_html=True
@@ -920,18 +924,18 @@ mold_chart = mold_chart[
     mold_chart["Kode Mold"].astype(str).str.strip() != ""
 ]
 
-# AMBIL TOP 10
+# TOP 10
 mold_chart = (
     mold_chart
     .sort_values(
         by="Jumlah Defect",
-        ascending=True
+        ascending=False
     )
-    .tail(10)
+    .head(10)
 )
 
 # =====================================================
-# HORIZONTAL BAR CHART
+# BAR CHART VERTIKAL
 # =====================================================
 
 fig_mold = go.Figure()
@@ -940,10 +944,8 @@ fig_mold.add_trace(
 
     go.Bar(
 
-        x=mold_chart["Jumlah Defect"],
-        y=mold_chart["Kode Mold"],
-
-        orientation="h",
+        x=mold_chart["Kode Mold"],
+        y=mold_chart["Jumlah Defect"],
 
         text=mold_chart["Jumlah Defect"],
         textposition="outside",
@@ -951,14 +953,14 @@ fig_mold.add_trace(
         marker=dict(
             color="#8B0000",
             line=dict(
-                color="#600000",
+                color="#5c0000",
                 width=1
             )
         ),
 
         hovertemplate=
-        "<b>Kode Mold :</b> %{y}<br>" +
-        "<b>Total Defect :</b> %{x}<extra></extra>"
+        "<b>Kode Mold :</b> %{x}<br>" +
+        "<b>Total Defect :</b> %{y}<extra></extra>"
     )
 )
 
@@ -981,22 +983,15 @@ fig_mold.update_layout(
         color="black"
     ),
 
-    margin=dict(
-        l=40,
-        r=40,
-        t=70,
-        b=40
-    ),
-
     xaxis=dict(
-        title="Jumlah Defect",
-        gridcolor="rgba(0,0,0,0.08)",
+        title="Kode Mold",
         tickfont=dict(size=12)
     ),
 
     yaxis=dict(
-        title="Kode Mold",
-        tickfont=dict(size=13)
+        title="Jumlah Defect",
+        tickfont=dict(size=12),
+        gridcolor="rgba(0,0,0,0.08)"
     )
 )
 
@@ -1032,20 +1027,15 @@ if selected_points:
         .dt.strftime("%d/%m/%Y")
     )
 
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # =====================================================
-    # HEADER DETAIL
-    # =====================================================
+    st.markdown("---")
 
     st.markdown(f"""
     <div style="
         background:white;
-        padding:22px;
+        padding:20px;
         border-radius:18px;
         border-left:8px solid #8B0000;
         box-shadow:0 4px 12px rgba(0,0,0,0.08);
-        margin-top:10px;
         margin-bottom:20px;
     ">
         <h2 style="
@@ -1059,7 +1049,7 @@ if selected_points:
     """, unsafe_allow_html=True)
 
     # =====================================================
-    # REKAP DEFECT
+    # REKAP
     # =====================================================
 
     rekap = (
@@ -1087,40 +1077,35 @@ if selected_points:
         st.markdown(f"""
         <div style="
             background:white;
-            padding:20px;
+            padding:18px;
             border-radius:16px;
             margin-bottom:16px;
             border:1px solid #e5e7eb;
             box-shadow:0 2px 8px rgba(0,0,0,0.05);
         ">
+        
+            <div style="
+                font-size:22px;
+                font-weight:800;
+                color:#8B0000;
+                margin-bottom:12px;
+            ">
+                📅 {tgl}
+            </div>
 
             <div style="
-                display:flex;
-                justify-content:space-between;
-                align-items:center;
+                background:#081F5C;
+                color:white;
+                padding:8px 14px;
+                border-radius:12px;
+                display:inline-block;
                 margin-bottom:14px;
+                font-size:14px;
+                font-weight:700;
             ">
-
-                <div style="
-                    font-size:22px;
-                    font-weight:800;
-                    color:#8B0000;
-                ">
-                    📅 {tgl}
-                </div>
-
-                <div style="
-                    background:#081F5C;
-                    color:white;
-                    padding:8px 14px;
-                    border-radius:12px;
-                    font-size:14px;
-                    font-weight:700;
-                ">
-                    {total_tgl} pcs
-                </div>
-
+                Total : {total_tgl} pcs
             </div>
+
         """, unsafe_allow_html=True)
 
         for _, row in sub.iterrows():
@@ -1137,15 +1122,15 @@ if selected_points:
                 align-items:center;
             ">
 
-                <div style="
+                <span style="
                     font-size:15px;
                     font-weight:600;
                     color:#222;
                 ">
                     {row['Keterangan']}
-                </div>
+                </span>
 
-                <div style="
+                <span style="
                     background:#8B0000;
                     color:white;
                     padding:5px 12px;
@@ -1154,12 +1139,15 @@ if selected_points:
                     font-weight:700;
                 ">
                     {row['Jumlah']} pcs
-                </div>
+                </span>
 
             </div>
             """, unsafe_allow_html=True)
 
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown(
+            "</div>",
+            unsafe_allow_html=True
+        )
             
 # =====================================================
 # TABEL KATEGORI
