@@ -1154,7 +1154,6 @@ if selected_points:
         height=350,
         hide_index=True
     )
-)
 
 # =====================================================
 # TABEL KATEGORI
