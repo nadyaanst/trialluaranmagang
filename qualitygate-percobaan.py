@@ -191,7 +191,6 @@ INPUT FORM BOX
 # =====================================================
 # HEADER
 # =====================================================
-
 st.markdown("""
 <div class="dashboard-container">
     <div class="dashboard-title">
@@ -472,9 +471,6 @@ jumlah_layer_ng = int(
     df_f["is_ng"].sum()
 )
 
-# =====================================================
-# AKURASI SESUAI RUMUS BARU
-# =====================================================
 persentase_ok = (
     jumlah_layer_ok /
     jumlah_layer_jalan
@@ -519,11 +515,6 @@ with k4:
 # =====================================================
 # COMBO CHART
 # =====================================================
-
-# =====================================================
-# COMBO CHART
-# =====================================================
-
 st.markdown(
     '<div class="section-title">MONITORING HARIAN</div>',
     unsafe_allow_html=True
@@ -545,31 +536,19 @@ daily.columns = [
     "Layer OK"
 ]
 
-# =====================================================
-# PERSENTASE OK
-# =====================================================
 daily["Persentase OK"] = (
     daily["Layer OK"] /
     daily["Layer Jalan"]
 )
 
-# =====================================================
-# TARGET
-# =====================================================
 daily["Target"] = 1
 
-# =====================================================
-# CREATE FIGURE
-# =====================================================
 fig_combo = make_subplots(
     specs=[[{"secondary_y": True}]]
 )
 
-# =====================================================
 # BAR LAYER JALAN
-# =====================================================
 fig_combo.add_trace(
-
     go.Bar(
         x=daily["Tanggal"],
         y=daily["Layer Jalan"],
@@ -578,19 +557,15 @@ fig_combo.add_trace(
         text=daily["Layer Jalan"],
         textposition="outside",
         textfont=dict(
-            color="#8B0000",
+            color="black",
             size=12
         )
     ),
-
     secondary_y=False
 )
 
-# =====================================================
 # BAR LAYER OK
-# =====================================================
 fig_combo.add_trace(
-
     go.Bar(
         x=daily["Tanggal"],
         y=daily["Layer OK"],
@@ -599,31 +574,27 @@ fig_combo.add_trace(
         text=daily["Layer OK"],
         textposition="outside",
         textfont=dict(
-            color="#081F5C",
+            color="black",
             size=12
         )
     ),
-
     secondary_y=False
 )
 
-# =====================================================
 # LINE PERSENTASE OK
-# =====================================================
 fig_combo.add_trace(
-
     go.Scatter(
         x=daily["Tanggal"],
         y=daily["Persentase OK"],
         mode="lines+markers+text",
         name="Persentase OK",
         line=dict(
-            color="#00AEEF",
+            color="#FF6B00",
             width=4
         ),
         marker=dict(
             size=10,
-            color="#00AEEF"
+            color="#FF6B00"
         ),
         text=[
             f"{x:.1%}"
@@ -631,19 +602,15 @@ fig_combo.add_trace(
         ],
         textposition="top center",
         textfont=dict(
-            color="#00AEEF",
+            color="black",
             size=12
         )
     ),
-
     secondary_y=True
 )
 
-# =====================================================
-# LINE TARGET 100%
-# =====================================================
+# TARGET
 fig_combo.add_trace(
-
     go.Scatter(
         x=daily["Tanggal"],
         y=daily["Target"],
@@ -655,26 +622,16 @@ fig_combo.add_trace(
             dash="dash"
         )
     ),
-
     secondary_y=True
 )
 
-# =====================================================
-# LAYOUT
-# =====================================================
 fig_combo.update_layout(
-
     height=560,
-
     template="plotly_white",
-
     hovermode="x unified",
-
     barmode="group",
-
     plot_bgcolor="white",
     paper_bgcolor="white",
-
     legend=dict(
         orientation="h",
         yanchor="bottom",
@@ -682,16 +639,6 @@ fig_combo.update_layout(
         xanchor="center",
         x=0.5
     ),
-
-    font=dict(
-        family="Segoe UI",
-        size=13,
-        color="#111111"
-    ),
-
-    # =================================================
-    # TAMPILKAN 7 HARI PERTAMA
-    # =================================================
     xaxis=dict(
         rangeslider=dict(
             visible=True
@@ -704,14 +651,9 @@ fig_combo.update_layout(
     )
 )
 
-# =====================================================
-# Y AXIS
-# =====================================================
 fig_combo.update_yaxes(
     title_text="Jumlah Layer",
-    secondary_y=False,
-    showgrid=True,
-    gridcolor="rgba(0,0,0,0.08)"
+    secondary_y=False
 )
 
 fig_combo.update_yaxes(
@@ -721,87 +663,13 @@ fig_combo.update_yaxes(
     secondary_y=True
 )
 
-# =====================================================
-# SHOW
-# =====================================================
 st.plotly_chart(
     fig_combo,
     width="stretch"
 )
 
 # =====================================================
-# TOP TABLES
-# =====================================================
-t1,t2 = st.columns(2)
-
-with t1:
-
-    st.markdown(
-        '<div class="section-title">TOP 5 MESIN HOTPRESS BERMASALAH</div>',
-        unsafe_allow_html=True
-    )
-
-    top_hp = (
-        df_f.groupby("No HP")["is_ng"]
-        .sum()
-        .reset_index()
-        .rename(columns={
-            "No HP":"Mesin Hotpress",
-            "is_ng":"Jumlah Defect"
-        })
-        .sort_values(
-            by="Jumlah Defect",
-            ascending=False
-        )
-        .head(5)
-    )
-
-    top_hp.index = range(
-        1,
-        len(top_hp)+1
-    )
-
-    st.dataframe(
-        top_hp,
-        width="stretch",
-        height=250
-    )
-
-with t2:
-
-    st.markdown(
-        '<div class="section-title">TOP 5 MOLDING BERMASALAH</div>',
-        unsafe_allow_html=True
-    )
-
-    top_mold = (
-        df_f.groupby("Kode Mold")["is_ng"]
-        .sum()
-        .reset_index()
-        .rename(columns={
-            "Kode Mold":"Kode Mold",
-            "is_ng":"Jumlah Defect"
-        })
-        .sort_values(
-            by="Jumlah Defect",
-            ascending=False
-        )
-        .head(5)
-    )
-
-    top_mold.index = range(
-        1,
-        len(top_mold)+1
-    )
-
-    st.dataframe(
-        top_mold,
-        width="stretch",
-        height=250
-    )
-
-# =====================================================
-# ANALYSIS CHART
+# ANALISIS DATA
 # =====================================================
 st.markdown(
     '<div class="section-title">ANALISIS DATA</div>',
@@ -810,29 +678,42 @@ st.markdown(
 
 g1,g2 = st.columns(2)
 
+# =====================================================
+# GRAFIK MESIN
+# =====================================================
 with g1:
 
     mesin = (
         df_f.groupby("No HP")["is_ng"]
         .sum()
         .reset_index()
+        .rename(columns={
+            "is_ng":"Jumlah Defect"
+        })
     )
 
     fig1 = px.bar(
         mesin,
         x="No HP",
-        y="is_ng",
-        text_auto=True
+        y="Jumlah Defect",
+        text="Jumlah Defect"
     )
 
     fig1.update_traces(
-        marker_color="#0B1F4D"
+        marker_color="#0B1F4D",
+        textposition="outside",
+        textfont=dict(
+            color="black",
+            size=12
+        )
     )
 
     fig1.update_layout(
         title="Jumlah Defect per Mesin",
         template="plotly_white",
-        height=420
+        height=420,
+        xaxis_title="No HP",
+        yaxis_title="Jumlah Defect"
     )
 
     st.plotly_chart(
@@ -840,6 +721,9 @@ with g1:
         width="stretch"
     )
 
+# =====================================================
+# PIE CHART
+# =====================================================
 with g2:
 
     cacat = (
@@ -859,6 +743,14 @@ with g2:
         names="Jenis Defect",
         values="Jumlah",
         hole=0.45
+    )
+
+    fig2.update_traces(
+        textfont=dict(
+            color="black",
+            size=12
+        ),
+        textinfo="percent+label"
     )
 
     fig2.update_layout(
@@ -885,74 +777,43 @@ mold_chart = (
     .sum()
     .reset_index()
     .rename(columns={
-        "Kode Mold":"Kode Mold",
         "is_ng":"Jumlah Defect"
     })
     .sort_values(
         by="Jumlah Defect",
         ascending=False
     )
+    .head(10)
 )
 
-# =====================================================
-# FIGURE
-# =====================================================
 fig_mold = go.Figure()
 
 fig_mold.add_trace(
-
     go.Bar(
         x=mold_chart["Kode Mold"],
         y=mold_chart["Jumlah Defect"],
         text=mold_chart["Jumlah Defect"],
         textposition="outside",
+        textfont=dict(
+            color="black",
+            size=12
+        ),
         marker_color="#8B0000",
         name="Jumlah Defect"
     )
 )
 
-# =====================================================
-# LAYOUT
-# =====================================================
 fig_mold.update_layout(
-
     title={
-        "text":"Top Defect Molding",
+        "text":"Top 10 Defect Molding",
         "x":0.5
     },
-
     template="plotly_white",
-
     height=500,
-
     plot_bgcolor="white",
     paper_bgcolor="white",
-
     xaxis_title="Kode Mold",
-    yaxis_title="Jumlah Defect",
-
-    font=dict(
-        family="Segoe UI",
-        size=13
-    ),
-
-    # =================================================
-    # TAMPILKAN 10 MOLD TERATAS
-    # =================================================
-    xaxis=dict(
-        rangeslider=dict(
-            visible=True
-        ),
-        range=[
-            -0.5,
-            9.5
-        ]
-    )
-)
-
-fig_mold.update_yaxes(
-    showgrid=True,
-    gridcolor="rgba(0,0,0,0.08)"
+    yaxis_title="Jumlah Defect"
 )
 
 st.plotly_chart(
@@ -961,7 +822,7 @@ st.plotly_chart(
 )
 
 # =====================================================
-# TABEL JUMLAH DEFECT BERDASARKAN KATEGORI
+# TABEL KATEGORI
 # =====================================================
 st.markdown(
     '<div class="section-title">JUMLAH DEFECT BERDASARKAN KATEGORI</div>',
