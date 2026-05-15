@@ -674,7 +674,7 @@ fig_combo.update_layout(
 
         type="date",
 
-        tickformat="%d %b",
+        tickformat="%d %b\n%Y",
 
         dtick="D1",
 
@@ -689,7 +689,17 @@ fig_combo.update_layout(
 
         title_font=dict(
             color="black"
-        )
+        ),
+
+        rangeslider=dict(
+            visible=True,
+            thickness=0.08
+        ),
+
+        range=[
+            daily["Tanggal"].min(),
+            daily["Tanggal"].min() + pd.Timedelta(days=5)
+        ]
     )
 )
 
