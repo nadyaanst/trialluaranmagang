@@ -892,3 +892,138 @@ st.plotly_chart(
     fig_mold,
     width="stretch"
 )
+
+# =====================================================
+# TABEL KATEGORI
+# =====================================================
+st.markdown(
+    '<div class="section-title">JUMLAH DEFECT BERDASARKAN KATEGORI</div>',
+    unsafe_allow_html=True
+)
+
+kategori_order = [
+    "Dimensi",
+    "Visual",
+    "Visual Dimensi",
+    "OK",
+    "Dimensi Panjang",
+    "Dimensi Lebar",
+    "Dimensi Tebal",
+    "Dimensi Panjang & Lebar",
+    "Dimensi Panjang & Tebal",
+    "Dimensi Lebar & Tebal"
+]
+
+kategori_df = (
+    df_f["Keterangan"]
+    .value_counts()
+    .reindex(kategori_order, fill_value=0)
+    .reset_index()
+)
+
+kategori_df.columns = [
+    "Kategori Defect",
+    "Jumlah"
+]
+
+kategori_df.index = range(
+    1,
+    len(kategori_df)+1
+)
+
+st.dataframe(
+    kategori_df,
+    width="stretch",
+    height=420
+)
+
+# =====================================================
+# TABLE DATA
+# =====================================================
+st.markdown(
+    '<div class="section-title">TABEL DATA</div>',
+    unsafe_allow_html=True
+)
+
+df_show = df_f.copy()
+
+df_show["Tanggal"] = (
+    df_show["Tanggal"]
+    .dt.strftime("%d/%m/%Y")
+)
+
+st.dataframe(
+    df_show[COLUMNS],
+    width="stretch",
+    height=450
+)
+
+# =====================================================
+# DELETE DATA
+# =====================================================
+st.markdown(
+    '<div class="section-title">HAPUS DATA</div>',
+    unsafe_allow_html=True
+)
+
+hapus = st.number_input(
+    "Masukkan Nomor Data",
+    min_value=1,
+    step=1
+)
+
+if st.button("Hapus"):
+
+    df = st.session_state["db"]
+
+    df = df[
+        df["No"] != hapus
+    ]
+
+    df["No"] = range(
+        1,
+        len(df)+1
+    )
+
+    st.session_state["db"] = df
+
+    st.success("Data berhasil dihapus")
+
+# =====================================================
+# DOWNLOAD
+# =====================================================
+st.markdown(
+    '<div class="section-title">DOWNLOAD DATA</div>',
+    unsafe_allow_html=True
+)
+
+def convert_excel(data):
+
+    export = data.copy()
+
+    if "Tanggal" in export.columns:
+
+        export["Tanggal"] = pd.to_datetime(
+            export["Tanggal"],
+            errors="coerce"
+        ).dt.strftime("%d/%m/%Y")
+
+    output = io.BytesIO()
+
+    with pd.ExcelWriter(
+        output,
+        engine="openpyxl"
+    ) as writer:
+
+        export[COLUMNS].to_excel(
+            writer,
+            index=False
+        )
+
+    return output.getvalue()
+
+st.download_button(
+    label="Download Excel",
+    data=convert_excel(df),
+    file_name="quality_gate.xlsx"
+)
