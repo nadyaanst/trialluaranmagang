@@ -516,6 +516,7 @@ with k4:
 # =====================================================
 # COMBO CHART
 # =====================================================
+
 st.markdown(
     '<div class="section-title">MONITORING HARIAN</div>',
     unsafe_allow_html=True
@@ -548,65 +549,65 @@ fig_combo = make_subplots(
     specs=[[{"secondary_y": True}]]
 )
 
-# BAR LAYER JALAN
+# =====================================================
+# BAR TOTAL LAYER JALAN
+# =====================================================
 fig_combo.add_trace(
 
     go.Bar(
         x=daily["Tanggal"],
         y=daily["Layer Jalan"],
         name="Total Layer Jalan",
-        marker_color="#8B0000",
-        text=daily["Layer Jalan"],
-        textposition="outside",
-        textfont=dict(
-            color="black",
-            size=12
-        )
+        marker_color="#8B0000"
     ),
 
     secondary_y=False
 )
 
-# BAR LAYER OK
+# =====================================================
+# BAR TOTAL LAYER OK
+# =====================================================
 fig_combo.add_trace(
 
     go.Bar(
         x=daily["Tanggal"],
         y=daily["Layer OK"],
         name="Total Layer OK",
-        marker_color="#081F5C",
-        text=daily["Layer OK"],
-        textposition="outside",
-        textfont=dict(
-            color="black",
-            size=12
-        )
+        marker_color="#081F5C"
     ),
 
     secondary_y=False
 )
 
+# =====================================================
 # LINE PERSENTASE OK
+# =====================================================
 fig_combo.add_trace(
 
     go.Scatter(
         x=daily["Tanggal"],
         y=daily["Persentase OK"],
         mode="lines+markers+text",
+
         name="Persentase OK",
+
         line=dict(
             color="#FF6B00",
             width=4
         ),
+
         marker=dict(
             size=10,
             color="#FF6B00"
         ),
+
         text=[
             f"{x:.1%}"
             for x in daily["Persentase OK"]
         ],
+
         textposition="top center",
+
         textfont=dict(
             color="black",
             size=12
@@ -616,14 +617,18 @@ fig_combo.add_trace(
     secondary_y=True
 )
 
-# TARGET
+# =====================================================
+# TARGET 100%
+# =====================================================
 fig_combo.add_trace(
 
     go.Scatter(
         x=daily["Tanggal"],
         y=daily["Target"],
         mode="lines",
+
         name="Target 100%",
+
         line=dict(
             color="#00C853",
             width=3,
@@ -634,6 +639,9 @@ fig_combo.add_trace(
     secondary_y=True
 )
 
+# =====================================================
+# LAYOUT
+# =====================================================
 fig_combo.update_layout(
 
     height=560,
@@ -663,34 +671,68 @@ fig_combo.update_layout(
     ),
 
     xaxis=dict(
-        rangeslider=dict(
-            visible=True
-        ),
+
         type="date",
-        range=[
-            daily["Tanggal"].min(),
-            daily["Tanggal"].min() + pd.Timedelta(days=6)
-        ],
-        title_font=dict(color="black"),
-        tickfont=dict(color="black")
+
+        tickformat="%d %b",
+
+        dtick="D1",
+
+        tickangle=0,
+
+        showgrid=False,
+
+        tickfont=dict(
+            color="black",
+            size=12
+        ),
+
+        title_font=dict(
+            color="black"
+        )
     )
 )
 
+# =====================================================
+# Y AXIS KIRI
+# =====================================================
 fig_combo.update_yaxes(
+
     title_text="Jumlah Layer",
+
     secondary_y=False,
-    title_font=dict(color="black"),
-    tickfont=dict(color="black"),
+
+    title_font=dict(
+        color="black"
+    ),
+
+    tickfont=dict(
+        color="black"
+    ),
+
     gridcolor="rgba(0,0,0,0.08)"
 )
 
+# =====================================================
+# Y AXIS KANAN
+# =====================================================
 fig_combo.update_yaxes(
+
     title_text="Persentase OK",
+
     tickformat=".0%",
+
     range=[0,1.1],
+
     secondary_y=True,
-    title_font=dict(color="black"),
-    tickfont=dict(color="black")
+
+    title_font=dict(
+        color="black"
+    ),
+
+    tickfont=dict(
+        color="black"
+    )
 )
 
 st.plotly_chart(
