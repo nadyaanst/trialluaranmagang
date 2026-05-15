@@ -897,14 +897,13 @@ with g2:
 # =====================================================
 # VISUALISASI DEFECT MOLDING
 # =====================================================
-
 st.markdown(
     '<div class="section-title">VISUALISASI DEFECT MOLDING</div>',
     unsafe_allow_html=True
 )
 
 # =====================================================
-# DATA TOP MOLD
+# DATA MOLD
 # =====================================================
 
 mold_chart = (
@@ -916,7 +915,7 @@ mold_chart = (
     })
 )
 
-# HAPUS MOLD KOSONG
+# HAPUS KODE MOLD KOSONG
 mold_chart = mold_chart[
     mold_chart["Kode Mold"].astype(str).str.strip() != ""
 ]
@@ -926,13 +925,13 @@ mold_chart = (
     mold_chart
     .sort_values(
         by="Jumlah Defect",
-        ascending=False
+        ascending=True
     )
-    .head(10)
+    .tail(10)
 )
 
 # =====================================================
-# BAR CHART VERTIKAL
+# HORIZONTAL BAR CHART
 # =====================================================
 
 fig_mold = go.Figure()
@@ -941,8 +940,10 @@ fig_mold.add_trace(
 
     go.Bar(
 
-        x=mold_chart["Kode Mold"],
-        y=mold_chart["Jumlah Defect"],
+        x=mold_chart["Jumlah Defect"],
+        y=mold_chart["Kode Mold"],
+
+        orientation="h",
 
         text=mold_chart["Jumlah Defect"],
         textposition="outside",
@@ -950,14 +951,14 @@ fig_mold.add_trace(
         marker=dict(
             color="#8B0000",
             line=dict(
-                color="#5c0000",
+                color="#600000",
                 width=1
             )
         ),
 
         hovertemplate=
-        "<b>Kode Mold :</b> %{x}<br>" +
-        "<b>Total Defect :</b> %{y}<extra></extra>"
+        "<b>Kode Mold :</b> %{y}<br>" +
+        "<b>Total Defect :</b> %{x}<extra></extra>"
     )
 )
 
@@ -975,28 +976,32 @@ fig_mold.update_layout(
     plot_bgcolor="white",
     paper_bgcolor="white",
 
-    xaxis_title="Kode Mold",
-    yaxis_title="Jumlah Defect",
-
     font=dict(
         family="Segoe UI",
         color="black"
     ),
 
+    margin=dict(
+        l=40,
+        r=40,
+        t=70,
+        b=40
+    ),
+
     xaxis=dict(
-        tickfont=dict(size=12),
-        title_font=dict(size=14)
+        title="Jumlah Defect",
+        gridcolor="rgba(0,0,0,0.08)",
+        tickfont=dict(size=12)
     ),
 
     yaxis=dict(
-        tickfont=dict(size=12),
-        title_font=dict(size=14),
-        gridcolor="rgba(0,0,0,0.08)"
+        title="Kode Mold",
+        tickfont=dict(size=13)
     )
 )
 
 # =====================================================
-# EVENT CLICK
+# CLICK EVENT
 # =====================================================
 
 selected_points = plotly_events(
@@ -1004,11 +1009,12 @@ selected_points = plotly_events(
     click_event=True,
     hover_event=False,
     select_event=False,
+    override_height=520,
     key="mold_chart"
 )
 
 # =====================================================
-# TAMPILKAN DETAIL
+# DETAIL MOLD
 # =====================================================
 
 if selected_points:
@@ -1035,10 +1041,11 @@ if selected_points:
     st.markdown(f"""
     <div style="
         background:white;
-        padding:20px;
+        padding:22px;
         border-radius:18px;
         border-left:8px solid #8B0000;
         box-shadow:0 4px 12px rgba(0,0,0,0.08);
+        margin-top:10px;
         margin-bottom:20px;
     ">
         <h2 style="
@@ -1052,7 +1059,7 @@ if selected_points:
     """, unsafe_allow_html=True)
 
     # =====================================================
-    # REKAP
+    # REKAP DEFECT
     # =====================================================
 
     rekap = (
@@ -1077,95 +1084,82 @@ if selected_points:
 
         total_tgl = sub["Jumlah"].sum()
 
-        with st.container():
+        st.markdown(f"""
+        <div style="
+            background:white;
+            padding:20px;
+            border-radius:16px;
+            margin-bottom:16px;
+            border:1px solid #e5e7eb;
+            box-shadow:0 2px 8px rgba(0,0,0,0.05);
+        ">
 
-            st.markdown(f"""
             <div style="
-                background:white;
-                padding:18px;
-                border-radius:16px;
-                margin-bottom:15px;
-                border:1px solid #e5e7eb;
-                box-shadow:0 2px 8px rgba(0,0,0,0.05);
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                margin-bottom:14px;
             ">
-            """, unsafe_allow_html=True)
 
-            col1, col2 = st.columns([3,1])
-
-            with col1:
-                st.markdown(f"""
                 <div style="
                     font-size:22px;
                     font-weight:800;
                     color:#8B0000;
-                    margin-bottom:8px;
                 ">
                     📅 {tgl}
                 </div>
-                """, unsafe_allow_html=True)
 
-            with col2:
-                st.markdown(f"""
                 <div style="
                     background:#081F5C;
                     color:white;
-                    padding:10px;
+                    padding:8px 14px;
                     border-radius:12px;
-                    text-align:center;
+                    font-size:14px;
                     font-weight:700;
-                    font-size:15px;
                 ">
                     {total_tgl} pcs
                 </div>
-                """, unsafe_allow_html=True)
 
-            st.markdown("""
+            </div>
+        """, unsafe_allow_html=True)
+
+        for _, row in sub.iterrows():
+
+            st.markdown(f"""
             <div style="
-                margin-top:12px;
+                background:#f8fafc;
+                padding:12px 16px;
+                border-radius:12px;
                 margin-bottom:10px;
-                font-weight:700;
-                color:#444;
-                font-size:15px;
+                border-left:5px solid #8B0000;
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
             ">
-                Detail Defect
+
+                <div style="
+                    font-size:15px;
+                    font-weight:600;
+                    color:#222;
+                ">
+                    {row['Keterangan']}
+                </div>
+
+                <div style="
+                    background:#8B0000;
+                    color:white;
+                    padding:5px 12px;
+                    border-radius:999px;
+                    font-size:14px;
+                    font-weight:700;
+                ">
+                    {row['Jumlah']} pcs
+                </div>
+
             </div>
             """, unsafe_allow_html=True)
 
-            for _, row in sub.iterrows():
-
-                st.markdown(f"""
-                <div style="
-                    background:#f8fafc;
-                    padding:12px 16px;
-                    border-radius:12px;
-                    margin-bottom:8px;
-                    border-left:5px solid #8B0000;
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:center;
-                ">
-                    <span style="
-                        font-size:15px;
-                        color:#222;
-                        font-weight:600;
-                    ">
-                        {row['Keterangan']}
-                    </span>
-
-                    <span style="
-                        background:#8B0000;
-                        color:white;
-                        padding:5px 12px;
-                        border-radius:999px;
-                        font-size:14px;
-                        font-weight:700;
-                    ">
-                        {row['Jumlah']} pcs
-                    </span>
-                </div>
-                """, unsafe_allow_html=True)
-
-            st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
             
 # =====================================================
 # TABEL KATEGORI
