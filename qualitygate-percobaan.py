@@ -897,9 +897,6 @@ with g2:
 # =====================================================
 # VISUALISASI DEFECT MOLDING
 # =====================================================
-# =====================================================
-# VISUALISASI DEFECT MOLDING
-# =====================================================
 
 st.markdown(
     '<div class="section-title">VISUALISASI DEFECT MOLDING</div>',
@@ -919,12 +916,12 @@ mold_chart = (
     })
 )
 
-# HAPUS KODE MOLD KOSONG
+# HAPUS DATA KOSONG
 mold_chart = mold_chart[
     mold_chart["Kode Mold"].astype(str).str.strip() != ""
 ]
 
-# TOP 10
+# AMBIL TOP 10
 mold_chart = (
     mold_chart
     .sort_values(
@@ -935,7 +932,7 @@ mold_chart = (
 )
 
 # =====================================================
-# BAR CHART VERTIKAL
+# GRAFIK BAR VERTIKAL
 # =====================================================
 
 fig_mold = go.Figure()
@@ -954,7 +951,7 @@ fig_mold.add_trace(
             color="#8B0000",
             line=dict(
                 color="#5c0000",
-                width=1
+                width=1.5
             )
         ),
 
@@ -967,13 +964,17 @@ fig_mold.add_trace(
 fig_mold.update_layout(
 
     title={
-        "text": "Top 10 Defect Molding",
-        "x": 0.5
+        "text": "TOP 10 DEFECT MOLDING",
+        "x": 0.5,
+        "font": dict(
+            size=22,
+            color="#081F5C"
+        )
     },
 
     template="plotly_white",
 
-    height=520,
+    height=600,
 
     plot_bgcolor="white",
     paper_bgcolor="white",
@@ -983,20 +984,30 @@ fig_mold.update_layout(
         color="black"
     ),
 
+    margin=dict(
+        l=50,
+        r=30,
+        t=80,
+        b=60
+    ),
+
     xaxis=dict(
         title="Kode Mold",
-        tickfont=dict(size=12)
+        title_font=dict(size=15),
+        tickfont=dict(size=12),
+        showgrid=False
     ),
 
     yaxis=dict(
         title="Jumlah Defect",
+        title_font=dict(size=15),
         tickfont=dict(size=12),
         gridcolor="rgba(0,0,0,0.08)"
     )
 )
 
 # =====================================================
-# CLICK EVENT
+# TAMPILKAN GRAFIK
 # =====================================================
 
 selected_points = plotly_events(
@@ -1004,12 +1015,12 @@ selected_points = plotly_events(
     click_event=True,
     hover_event=False,
     select_event=False,
-    override_height=520,
+    override_height=600,
     key="mold_chart"
 )
 
 # =====================================================
-# DETAIL MOLD
+# DETAIL SETELAH KLIK
 # =====================================================
 
 if selected_points:
@@ -1027,29 +1038,72 @@ if selected_points:
         .dt.strftime("%d/%m/%Y")
     )
 
-    st.markdown("---")
+    st.markdown("")
+
+    # =====================================================
+    # HEADER DETAIL
+    # =====================================================
 
     st.markdown(f"""
     <div style="
         background:white;
-        padding:20px;
+        padding:22px;
         border-radius:18px;
         border-left:8px solid #8B0000;
         box-shadow:0 4px 12px rgba(0,0,0,0.08);
+        margin-top:20px;
         margin-bottom:20px;
     ">
-        <h2 style="
-            margin:0;
-            color:#081F5C;
+        <div style="
+            font-size:28px;
             font-weight:800;
+            color:#081F5C;
         ">
             DETAIL MOLD : {selected_mold}
-        </h2>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
     # =====================================================
-    # REKAP
+    # KPI DETAIL
+    # =====================================================
+
+    total_defect = len(detail_df)
+
+    total_ok = int(detail_df["is_ok"].sum())
+
+    total_ng = int(detail_df["is_ng"].sum())
+
+    d1,d2,d3 = st.columns(3)
+
+    with d1:
+        st.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-title">TOTAL DATA</div>
+            <div class="kpi-value">{total_defect}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with d2:
+        st.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-title">TOTAL OK</div>
+            <div class="kpi-value">{total_ok}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with d3:
+        st.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-title">TOTAL DEFECT</div>
+            <div class="kpi-value">{total_ng}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("")
+
+    # =====================================================
+    # REKAP DEFECT
     # =====================================================
 
     rekap = (
@@ -1060,95 +1114,48 @@ if selected_points:
         .reset_index(name="Jumlah")
     )
 
-    tanggal_list = (
-        rekap["Tanggal"]
-        .drop_duplicates()
-        .tolist()
-    )
-
-    for tgl in tanggal_list:
+    for tgl in rekap["Tanggal"].unique():
 
         sub = rekap[
             rekap["Tanggal"] == tgl
         ]
 
-        total_tgl = sub["Jumlah"].sum()
-
         st.markdown(f"""
-        <div style="
-            background:white;
-            padding:18px;
-            border-radius:16px;
-            margin-bottom:16px;
-            border:1px solid #e5e7eb;
-            box-shadow:0 2px 8px rgba(0,0,0,0.05);
-        ">
-        
-            <div style="
-                font-size:22px;
-                font-weight:800;
-                color:#8B0000;
-                margin-bottom:12px;
-            ">
-                📅 {tgl}
-            </div>
+        ### 📅 {tgl}
+        """)
 
-            <div style="
-                background:#081F5C;
-                color:white;
-                padding:8px 14px;
-                border-radius:12px;
-                display:inline-block;
-                margin-bottom:14px;
-                font-size:14px;
-                font-weight:700;
-            ">
-                Total : {total_tgl} pcs
-            </div>
-
-        """, unsafe_allow_html=True)
-
-        for _, row in sub.iterrows():
-
-            st.markdown(f"""
-            <div style="
-                background:#f8fafc;
-                padding:12px 16px;
-                border-radius:12px;
-                margin-bottom:10px;
-                border-left:5px solid #8B0000;
-                display:flex;
-                justify-content:space-between;
-                align-items:center;
-            ">
-
-                <span style="
-                    font-size:15px;
-                    font-weight:600;
-                    color:#222;
-                ">
-                    {row['Keterangan']}
-                </span>
-
-                <span style="
-                    background:#8B0000;
-                    color:white;
-                    padding:5px 12px;
-                    border-radius:999px;
-                    font-size:14px;
-                    font-weight:700;
-                ">
-                    {row['Jumlah']} pcs
-                </span>
-
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
+        st.dataframe(
+            sub.rename(columns={
+                "Keterangan": "Jenis Defect",
+                "Jumlah": "Jumlah PCS"
+            }),
+            width="stretch",
+            hide_index=True
         )
-            
+
+    # =====================================================
+    # DETAIL DATA ASLI
+    # =====================================================
+
+    st.markdown("### DETAIL DATA")
+
+    st.dataframe(
+        detail_df[
+            [
+                "Tanggal",
+                "Shift",
+                "No HP",
+                "Layer HP",
+                "No Lot",
+                "Keterangan"
+            ]
+        ],
+        width="stretch",
+        height=350,
+        hide_index=True
+    )
+)
+
 # =====================================================
 # TABEL KATEGORI
 # =====================================================
