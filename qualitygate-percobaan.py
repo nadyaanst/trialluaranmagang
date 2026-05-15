@@ -588,7 +588,6 @@ fig_combo.add_trace(
         x=daily["Tanggal"],
         y=daily["Persentase OK"],
         mode="lines+markers+text",
-
         name="Persentase OK",
 
         line=dict(
@@ -610,8 +609,15 @@ fig_combo.add_trace(
 
         textfont=dict(
             color="black",
-            size=12
-        )
+            size=12,
+            family="Segoe UI Black"
+        ),
+
+        texttemplate="<b>%{text}</b>",
+
+        hovertemplate=
+        "<b>Tanggal:</b> %{x|%d-%m-%Y}<br>" +
+        "<b>Persentase OK:</b> %{y:.1%}<extra></extra>"
     ),
 
     secondary_y=True
@@ -702,6 +708,36 @@ fig_combo.update_layout(
         ]
     )
 )
+
+# BACKGROUND PUTIH UNTUK LABEL PERSENTASE
+for i, row in daily.iterrows():
+
+    fig_combo.add_annotation(
+
+        x=row["Tanggal"],
+        y=row["Persentase OK"],
+
+        text=f"<b>{row['Persentase OK']:.1%}</b>",
+
+        showarrow=False,
+
+        yshift=18,
+
+        font=dict(
+            color="black",
+            size=12
+        ),
+
+        bgcolor="white",
+
+        bordercolor="#d9d9d9",
+
+        borderwidth=1,
+
+        borderpad=4,
+
+        opacity=0.95
+    )
 
 # =====================================================
 # Y AXIS KIRI
