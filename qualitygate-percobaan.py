@@ -191,6 +191,7 @@ INPUT FORM BOX
 # =====================================================
 # HEADER
 # =====================================================
+
 st.markdown("""
 <div class="dashboard-container">
     <div class="dashboard-title">
@@ -549,6 +550,7 @@ fig_combo = make_subplots(
 
 # BAR LAYER JALAN
 fig_combo.add_trace(
+
     go.Bar(
         x=daily["Tanggal"],
         y=daily["Layer Jalan"],
@@ -561,11 +563,13 @@ fig_combo.add_trace(
             size=12
         )
     ),
+
     secondary_y=False
 )
 
 # BAR LAYER OK
 fig_combo.add_trace(
+
     go.Bar(
         x=daily["Tanggal"],
         y=daily["Layer OK"],
@@ -578,11 +582,13 @@ fig_combo.add_trace(
             size=12
         )
     ),
+
     secondary_y=False
 )
 
 # LINE PERSENTASE OK
 fig_combo.add_trace(
+
     go.Scatter(
         x=daily["Tanggal"],
         y=daily["Persentase OK"],
@@ -606,11 +612,13 @@ fig_combo.add_trace(
             size=12
         )
     ),
+
     secondary_y=True
 )
 
 # TARGET
 fig_combo.add_trace(
+
     go.Scatter(
         x=daily["Tanggal"],
         y=daily["Target"],
@@ -622,23 +630,38 @@ fig_combo.add_trace(
             dash="dash"
         )
     ),
+
     secondary_y=True
 )
 
 fig_combo.update_layout(
+
     height=560,
+
     template="plotly_white",
+
     hovermode="x unified",
+
     barmode="group",
+
     plot_bgcolor="white",
     paper_bgcolor="white",
+
+    font=dict(
+        family="Segoe UI",
+        size=13,
+        color="black"
+    ),
+
     legend=dict(
         orientation="h",
         yanchor="bottom",
         y=1.02,
         xanchor="center",
-        x=0.5
+        x=0.5,
+        font=dict(color="black")
     ),
+
     xaxis=dict(
         rangeslider=dict(
             visible=True
@@ -647,20 +670,27 @@ fig_combo.update_layout(
         range=[
             daily["Tanggal"].min(),
             daily["Tanggal"].min() + pd.Timedelta(days=6)
-        ]
+        ],
+        title_font=dict(color="black"),
+        tickfont=dict(color="black")
     )
 )
 
 fig_combo.update_yaxes(
     title_text="Jumlah Layer",
-    secondary_y=False
+    secondary_y=False,
+    title_font=dict(color="black"),
+    tickfont=dict(color="black"),
+    gridcolor="rgba(0,0,0,0.08)"
 )
 
 fig_combo.update_yaxes(
     title_text="Persentase OK",
     tickformat=".0%",
     range=[0,1.1],
-    secondary_y=True
+    secondary_y=True,
+    title_font=dict(color="black"),
+    tickfont=dict(color="black")
 )
 
 st.plotly_chart(
@@ -713,7 +743,21 @@ with g1:
         template="plotly_white",
         height=420,
         xaxis_title="No HP",
-        yaxis_title="Jumlah Defect"
+        yaxis_title="Jumlah Defect",
+
+        font=dict(
+            color="black"
+        ),
+
+        xaxis=dict(
+            title_font=dict(color="black"),
+            tickfont=dict(color="black")
+        ),
+
+        yaxis=dict(
+            title_font=dict(color="black"),
+            tickfont=dict(color="black")
+        )
     )
 
     st.plotly_chart(
@@ -756,7 +800,15 @@ with g2:
     fig2.update_layout(
         title="Distribusi Jenis Defect",
         template="plotly_white",
-        height=420
+        height=420,
+
+        font=dict(
+            color="black"
+        ),
+
+        legend=dict(
+            font=dict(color="black")
+        )
     )
 
     st.plotly_chart(
@@ -789,6 +841,7 @@ mold_chart = (
 fig_mold = go.Figure()
 
 fig_mold.add_trace(
+
     go.Bar(
         x=mold_chart["Kode Mold"],
         y=mold_chart["Jumlah Defect"],
@@ -804,154 +857,38 @@ fig_mold.add_trace(
 )
 
 fig_mold.update_layout(
+
     title={
         "text":"Top 10 Defect Molding",
         "x":0.5
     },
+
     template="plotly_white",
+
     height=500,
+
     plot_bgcolor="white",
     paper_bgcolor="white",
+
     xaxis_title="Kode Mold",
-    yaxis_title="Jumlah Defect"
+    yaxis_title="Jumlah Defect",
+
+    font=dict(
+        color="black"
+    ),
+
+    xaxis=dict(
+        title_font=dict(color="black"),
+        tickfont=dict(color="black")
+    ),
+
+    yaxis=dict(
+        title_font=dict(color="black"),
+        tickfont=dict(color="black")
+    )
 )
 
 st.plotly_chart(
     fig_mold,
     width="stretch"
-)
-
-# =====================================================
-# TABEL KATEGORI
-# =====================================================
-st.markdown(
-    '<div class="section-title">JUMLAH DEFECT BERDASARKAN KATEGORI</div>',
-    unsafe_allow_html=True
-)
-
-kategori_order = [
-    "Dimensi",
-    "Visual",
-    "Visual Dimensi",
-    "OK",
-    "Dimensi Panjang",
-    "Dimensi Lebar",
-    "Dimensi Tebal",
-    "Dimensi Panjang & Lebar",
-    "Dimensi Panjang & Tebal",
-    "Dimensi Lebar & Tebal"
-]
-
-kategori_df = (
-    df_f["Keterangan"]
-    .value_counts()
-    .reindex(kategori_order, fill_value=0)
-    .reset_index()
-)
-
-kategori_df.columns = [
-    "Kategori Defect",
-    "Jumlah"
-]
-
-kategori_df.index = range(
-    1,
-    len(kategori_df)+1
-)
-
-st.dataframe(
-    kategori_df,
-    width="stretch",
-    height=420
-)
-
-# =====================================================
-# TABLE DATA
-# =====================================================
-st.markdown(
-    '<div class="section-title">TABEL DATA</div>',
-    unsafe_allow_html=True
-)
-
-df_show = df_f.copy()
-
-df_show["Tanggal"] = (
-    df_show["Tanggal"]
-    .dt.strftime("%d/%m/%Y")
-)
-
-st.dataframe(
-    df_show[COLUMNS],
-    width="stretch",
-    height=450
-)
-
-# =====================================================
-# DELETE DATA
-# =====================================================
-st.markdown(
-    '<div class="section-title">HAPUS DATA</div>',
-    unsafe_allow_html=True
-)
-
-hapus = st.number_input(
-    "Masukkan Nomor Data",
-    min_value=1,
-    step=1
-)
-
-if st.button("Hapus"):
-
-    df = st.session_state["db"]
-
-    df = df[
-        df["No"] != hapus
-    ]
-
-    df["No"] = range(
-        1,
-        len(df)+1
-    )
-
-    st.session_state["db"] = df
-
-    st.success("Data berhasil dihapus")
-
-# =====================================================
-# DOWNLOAD
-# =====================================================
-st.markdown(
-    '<div class="section-title">DOWNLOAD DATA</div>',
-    unsafe_allow_html=True
-)
-
-def convert_excel(data):
-
-    export = data.copy()
-
-    if "Tanggal" in export.columns:
-
-        export["Tanggal"] = pd.to_datetime(
-            export["Tanggal"],
-            errors="coerce"
-        ).dt.strftime("%d/%m/%Y")
-
-    output = io.BytesIO()
-
-    with pd.ExcelWriter(
-        output,
-        engine="openpyxl"
-    ) as writer:
-
-        export[COLUMNS].to_excel(
-            writer,
-            index=False
-        )
-
-    return output.getvalue()
-
-st.download_button(
-    label="Download Excel",
-    data=convert_excel(df),
-    file_name="quality_gate.xlsx"
 )
