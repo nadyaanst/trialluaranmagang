@@ -906,6 +906,20 @@ st.markdown(
 # =====================================================
 # DATA TOP 10 MOLD DEFECT
 # =====================================================
+# =====================================================
+# VISUALISASI DEFECT MOLDING
+# =====================================================
+
+from streamlit_plotly_events import plotly_events
+
+st.markdown(
+    '<div class="section-title">VISUALISASI DEFECT MOLDING</div>',
+    unsafe_allow_html=True
+)
+
+# =====================================================
+# DATA MOLD
+# =====================================================
 
 mold_chart = (
     df_f.groupby("Kode Mold")["is_ng"]
@@ -921,8 +935,13 @@ mold_chart = (
     .head(10)
 )
 
+# HAPUS DATA KOSONG
+mold_chart = mold_chart[
+    mold_chart["Kode Mold"].astype(str).str.strip() != ""
+]
+
 # =====================================================
-# BAR CHART
+# BAR CHART VERTIKAL
 # =====================================================
 
 fig_mold = go.Figure()
@@ -934,21 +953,19 @@ fig_mold.add_trace(
         y=mold_chart["Jumlah Defect"],
 
         text=mold_chart["Jumlah Defect"],
-
         textposition="outside",
 
-        textfont=dict(
-            color="black",
-            size=12
-        ),
-
         marker=dict(
-            color="#8B0000"
+            color="#8B0000",
+            line=dict(
+                color="#600000",
+                width=1
+            )
         ),
 
         hovertemplate=
-        "<b>Mold:</b> %{x}<br>" +
-        "<b>Total Defect:</b> %{y} pcs<extra></extra>"
+        "<b>Kode Mold :</b> %{x}<br>" +
+        "<b>Total Defect :</b> %{y}<extra></extra>"
     )
 )
 
@@ -961,7 +978,7 @@ fig_mold.update_layout(
 
     template="plotly_white",
 
-    height=500,
+    height=520,
 
     plot_bgcolor="white",
     paper_bgcolor="white",
@@ -970,7 +987,19 @@ fig_mold.update_layout(
     yaxis_title="Jumlah Defect",
 
     font=dict(
+        family="Segoe UI",
         color="black"
+    ),
+
+    xaxis=dict(
+        tickfont=dict(size=12),
+        title_font=dict(size=14)
+    ),
+
+    yaxis=dict(
+        tickfont=dict(size=12),
+        title_font=dict(size=14),
+        gridcolor="rgba(0,0,0,0.08)"
     )
 )
 
@@ -983,94 +1012,113 @@ selected_points = plotly_events(
     click_event=True,
     hover_event=False,
     select_event=False,
-    override_height=500,
+    override_height=520,
     key="mold_chart"
 )
 
+# TAMPILKAN CHART
+st.plotly_chart(
+    fig_mold,
+    width="stretch"
+)
+
 # =====================================================
-# DETAIL INFORMASI
+# DETAIL MOLD
 # =====================================================
 
 if selected_points:
 
-    selected_mold = selected_points[0]["x"]
+    selected_index = selected_points[0]["pointIndex"]
+
+    selected_mold = mold_chart.iloc[selected_index]["Kode Mold"]
+
+    st.markdown("---")
 
     st.markdown(f"""
     <div style="
         background:white;
         padding:22px;
         border-radius:18px;
-        margin-top:20px;
-        box-shadow:0 4px 15px rgba(0,0,0,0.08);
         border-left:8px solid #8B0000;
+        box-shadow:0 4px 12px rgba(0,0,0,0.08);
+        margin-top:10px;
+        margin-bottom:20px;
     ">
-        <h2 style="
-            color:#081F5C;
-            margin-bottom:0;
-        ">
+        <h3 style="margin-bottom:0;color:#081F5C;">
             DETAIL MOLD : {selected_mold}
-        </h2>
+        </h3>
     </div>
     """, unsafe_allow_html=True)
 
     detail_df = df_f[
-        (df_f["Kode Mold"] == selected_mold)
-        &
-        (df_f["is_ng"] == 1)
+        df_f["Kode Mold"] == selected_mold
     ].copy()
 
-    if not detail_df.empty:
+    detail_df["Tanggal"] = (
+        detail_df["Tanggal"]
+        .dt.strftime("%d/%m/%Y")
+    )
 
-        detail_df["Tanggal"] = (
-            detail_df["Tanggal"]
-            .dt.strftime("%d/%m/%Y")
+    # =====================================================
+    # REKAP PER TANGGAL DAN DEFECT
+    # =====================================================
+
+    rekap = (
+        detail_df.groupby(
+            ["Tanggal", "Keterangan"]
         )
+        .size()
+        .reset_index(name="Jumlah")
+    )
 
-        tanggal_group = (
-            detail_df.groupby("Tanggal")
-        )
+    tanggal_unik = rekap["Tanggal"].unique()
 
-        for tanggal, data_tgl in tanggal_group:
+    for tgl in tanggal_unik:
 
-            total = len(data_tgl)
+        sub = rekap[
+            rekap["Tanggal"] == tgl
+        ]
+
+        total_tgl = sub["Jumlah"].sum()
+
+        st.markdown(f"""
+        <div style="
+            background:#f8f9fc;
+            padding:18px;
+            border-radius:14px;
+            margin-bottom:14px;
+            border:1px solid #e3e6ef;
+        ">
+            <h4 style="
+                color:#8B0000;
+                margin-bottom:10px;
+            ">
+                📅 {tgl}
+            </h4>
+
+            <p style="
+                font-size:16px;
+                margin-bottom:8px;
+            ">
+                Total Penggunaan :
+                <b>{total_tgl} pcs</b>
+            </p>
+        """, unsafe_allow_html=True)
+
+        for _, row in sub.iterrows():
 
             st.markdown(f"""
             <div style="
-                background:white;
-                padding:18px;
-                border-radius:15px;
-                margin-top:15px;
-                border:1px solid #e5e7eb;
+                margin-left:10px;
+                margin-bottom:6px;
+                font-size:15px;
             ">
-                <h4 style="
-                    color:#8B0000;
-                    margin-bottom:10px;
-                ">
-                    {tanggal} — {total} pcs defect
-                </h4>
+                • {row['Keterangan']} :
+                <b>{row['Jumlah']} pcs</b>
+            </div>
             """, unsafe_allow_html=True)
 
-            defect_count = (
-                data_tgl["Keterangan"]
-                .value_counts()
-            )
-
-            detail_table = pd.DataFrame({
-                "Jenis Defect": defect_count.index,
-                "Jumlah": defect_count.values
-            })
-
-            st.dataframe(
-                detail_table,
-                width="stretch",
-                hide_index=True
-            )
-
-            st.markdown("</div>", unsafe_allow_html=True)
-
-    else:
-
-        st.info("Tidak ada defect pada mold ini")
+        st.markdown("</div>", unsafe_allow_html=True)
         
 # =====================================================
 # TABEL KATEGORI
