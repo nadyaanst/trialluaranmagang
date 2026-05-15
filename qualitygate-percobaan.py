@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import datetime
 import io
+from streamlit_plotly_events import plotly_events
 
 # =====================================================
 # PAGE CONFIG
@@ -921,56 +922,6 @@ mold_chart = (
 )
 
 # =====================================================
-# MEMBUAT DETAIL TOOLTIP
-# =====================================================
-
-detail_hover = []
-
-for mold in mold_chart["Kode Mold"]:
-
-    detail_df = df_f[
-        (df_f["Kode Mold"] == mold)
-        &
-        (df_f["is_ng"] == 1)
-    ].copy()
-
-    detail_df["Tanggal"] = (
-        detail_df["Tanggal"]
-        .dt.strftime("%d/%m/%Y")
-    )
-
-    teks = f"<b>{mold}</b><br><br>"
-
-    tanggal_group = (
-        detail_df.groupby("Tanggal")
-    )
-
-    for tanggal, data_tgl in tanggal_group:
-
-        total = len(data_tgl)
-
-        teks += (
-            f"<b>{tanggal}</b> = "
-            f"{total} pcs<br>"
-        )
-
-        defect_count = (
-            data_tgl["Keterangan"]
-            .value_counts()
-        )
-
-        for defect, qty in defect_count.items():
-
-            teks += (
-                f"• {defect} : "
-                f"{qty} pcs<br>"
-            )
-
-        teks += "<br>"
-
-    detail_hover.append(teks)
-
-# =====================================================
 # BAR CHART
 # =====================================================
 
@@ -992,25 +943,14 @@ fig_mold.add_trace(
         ),
 
         marker=dict(
-            color="#8B0000",
-            line=dict(
-                color="#5A0000",
-                width=1.5
-            )
+            color="#8B0000"
         ),
 
         hovertemplate=
-        "%{customdata}<extra></extra>",
-
-        customdata=detail_hover,
-
-        name="Jumlah Defect"
+        "<b>Mold:</b> %{x}<br>" +
+        "<b>Total Defect:</b> %{y} pcs<extra></extra>"
     )
 )
-
-# =====================================================
-# LAYOUT
-# =====================================================
 
 fig_mold.update_layout(
 
@@ -1021,7 +961,7 @@ fig_mold.update_layout(
 
     template="plotly_white",
 
-    height=550,
+    height=500,
 
     plot_bgcolor="white",
     paper_bgcolor="white",
@@ -1029,34 +969,109 @@ fig_mold.update_layout(
     xaxis_title="Kode Mold",
     yaxis_title="Jumlah Defect",
 
-    hoverlabel=dict(
-        bgcolor="white",
-        font_size=13,
-        font_family="Segoe UI",
-        font_color="black",
-        bordercolor="#d9d9d9"
-    ),
-
     font=dict(
         color="black"
-    ),
-
-    xaxis=dict(
-        title_font=dict(color="black"),
-        tickfont=dict(color="black")
-    ),
-
-    yaxis=dict(
-        title_font=dict(color="black"),
-        tickfont=dict(color="black")
     )
 )
 
-st.plotly_chart(
+# =====================================================
+# CLICK EVENT
+# =====================================================
+
+selected_points = plotly_events(
     fig_mold,
-    width="stretch"
+    click_event=True,
+    hover_event=False,
+    select_event=False,
+    override_height=500,
+    key="mold_chart"
 )
 
+# =====================================================
+# DETAIL INFORMASI
+# =====================================================
+
+if selected_points:
+
+    selected_mold = selected_points[0]["x"]
+
+    st.markdown(f"""
+    <div style="
+        background:white;
+        padding:22px;
+        border-radius:18px;
+        margin-top:20px;
+        box-shadow:0 4px 15px rgba(0,0,0,0.08);
+        border-left:8px solid #8B0000;
+    ">
+        <h2 style="
+            color:#081F5C;
+            margin-bottom:0;
+        ">
+            DETAIL MOLD : {selected_mold}
+        </h2>
+    </div>
+    """, unsafe_allow_html=True)
+
+    detail_df = df_f[
+        (df_f["Kode Mold"] == selected_mold)
+        &
+        (df_f["is_ng"] == 1)
+    ].copy()
+
+    if not detail_df.empty:
+
+        detail_df["Tanggal"] = (
+            detail_df["Tanggal"]
+            .dt.strftime("%d/%m/%Y")
+        )
+
+        tanggal_group = (
+            detail_df.groupby("Tanggal")
+        )
+
+        for tanggal, data_tgl in tanggal_group:
+
+            total = len(data_tgl)
+
+            st.markdown(f"""
+            <div style="
+                background:white;
+                padding:18px;
+                border-radius:15px;
+                margin-top:15px;
+                border:1px solid #e5e7eb;
+            ">
+                <h4 style="
+                    color:#8B0000;
+                    margin-bottom:10px;
+                ">
+                    {tanggal} — {total} pcs defect
+                </h4>
+            """, unsafe_allow_html=True)
+
+            defect_count = (
+                data_tgl["Keterangan"]
+                .value_counts()
+            )
+
+            detail_table = pd.DataFrame({
+                "Jenis Defect": defect_count.index,
+                "Jumlah": defect_count.values
+            })
+
+            st.dataframe(
+                detail_table,
+                width="stretch",
+                hide_index=True
+            )
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    else:
+
+        st.info("Tidak ada defect pada mold ini")
+        
 # =====================================================
 # TABEL KATEGORI
 # =====================================================
